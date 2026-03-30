@@ -1,0 +1,13 @@
+/* styles.css - Styles for the screen buddy */
+
+.buddy {
+  position: fixed;
+  top: 100px;
+  left: 100px;
+  width: 64px;
+  height: 64px;
+  background-color: #ff6b6b; /* Colorful placeholder */
+  border-radius: 50%; /* Make it circular for now */
+  z-index: 9999;
+  pointer-events: auto; /* Allow interactions */
+}

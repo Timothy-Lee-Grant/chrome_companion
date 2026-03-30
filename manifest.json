@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Screen Buddy",
+  "version": "1.0",
+  "description": "A small animated character that lives on your browser screen",
+  "permissions": [],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["buddy-sprites.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
