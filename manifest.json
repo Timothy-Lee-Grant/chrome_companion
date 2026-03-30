@@ -13,7 +13,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["buddy-sprites.png"],
+      "resources": ["assets/sprites/*.png"],
       "matches": ["<all_urls>"]
     }
   ]

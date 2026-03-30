@@ -27,5 +27,6 @@ browser screen, moves around autonomously, and reacts to user interactions.
 
 ## Asset Details
 - We will start with a placeholder sprite sheet.
-- Assume the sprite sheet is named `buddy-sprites.png`.
+- I have provided you a pack of sprites inside of the `FreeAnimalPack.zip`
+- That zip file should have multiple different sprites. Start by implementing the panda sprite, but also allow for functionality of eventually easily swapping models to be able to unitilze multiple sprites or change them out. 
 - Each frame is 64x64 pixels.

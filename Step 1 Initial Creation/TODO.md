@@ -18,9 +18,20 @@
 - [x] Add smooth "Lerp" movement to prevent jitter.
 
 ## Phase 4: Animation & Interaction
-- [ ] Set up CSS `steps()` animation for the sprite sheet.
-- [ ] Add a click listener to trigger a "special" animation state.
-- [ ] Add a "Right-click" menu to hide/dismiss the buddy.
+- [x] Set up CSS `steps()` animation for the sprite sheet.
+- [x] Add a click listener to trigger a "special" animation state.
+- [x] Add a "Right-click" menu to hide/dismiss the buddy.
+
+### Sprite Swapping Guide
+To change the active sprite, edit `content.js` line 44:
+```javascript
+const CURRENT_SPRITE = 'pig-idle'; // Change to 'dog-bark' or 'cat-jump'
+```
+
+Available sprites in `assets/sprites/`:
+- `pig-idle` (4 frames, 256x64px)
+- `dog-bark` (11 frames, 704x64px)
+- `cat-jump` (6.5 frames, 416x32px)
 
 ## Phase 5: Polishing
 - [ ] Ensure the character doesn't walk "off-screen" on window resize.

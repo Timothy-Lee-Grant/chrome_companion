@@ -1,18 +1,53 @@
 /* styles.css - Styles for the screen buddy */
 
-.buddy {
-  position: fixed;
-  width: 64px;
-  height: 64px;
-  background-color: #ff6b6b;
-  border-radius: 50%;
-  z-index: 9999;
-  pointer-events: auto;
-  transition: transform 0.13s ease-out;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+@keyframes buddy-walk {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -256px 0;
+  }
 }
 
-.buddy-clicked {
-  transform: scale(1.2) !important;
-  transition: transform 0.1s ease-in-out;
+@keyframes buddy-wave {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(5deg); }
+  50% { transform: scale(1) rotate(0deg); }
+  75% { transform: scale(1.1) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes buddy-surprised {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.2); }
+  50% { transform: scale(1.15); }
+  75% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes buddy-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+.buddy {
+  position: fixed !important;
+  width: 64px !important;
+  height: 64px !important;
+  z-index: 999999 !important;
+  display: block !important;
+  pointer-events: auto !important;
+}
+
+.buddy-wave {
+  animation: buddy-wave 0.6s ease-in-out !important;
+}
+
+.buddy-surprised {
+  animation: buddy-surprised 0.6s ease-in-out !important;
+}
+
+.buddy-hidden {
+  animation: buddy-fade-out 0.3s ease-in forwards !important;
+  pointer-events: none !important;
 }

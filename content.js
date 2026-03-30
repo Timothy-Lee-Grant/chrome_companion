@@ -1,5 +1,35 @@
 // content.js - Injects the screen buddy into the page and runs movement logic
 
+// Sprite configuration - allows easy swapping of different sprites
+const SPRITE_CONFIG = {
+  'pig-idle': {
+    url: chrome.runtime.getURL('assets/sprites/pig-idle.png'),
+    frameWidth: 64,
+    frameHeight: 64,
+    frameCount: 4,
+    animationDuration: 0.8, // seconds for full loop
+    defaultState: 'idle',
+  },
+  'dog-bark': {
+    url: chrome.runtime.getURL('assets/sprites/dog-bark.png'),
+    frameWidth: 64,
+    frameHeight: 64,
+    frameCount: 11,
+    animationDuration: 1.2,
+    defaultState: 'bark',
+  },
+  'cat-jump': {
+    url: chrome.runtime.getURL('assets/sprites/cat-jump.png'),
+    frameWidth: 64,
+    frameHeight: 32,
+    frameCount: 6.5,
+    animationDuration: 0.6,
+    defaultState: 'jump',
+  },
+};
+
+const CURRENT_SPRITE = 'pig-idle';
+
 const buddy = document.createElement('div');
 buddy.id = 'screen-buddy';
 buddy.className = 'buddy';
@@ -15,6 +45,8 @@ let buddyState = {
   lastStepTime: performance.now(),
   nextDecisionTime: performance.now() + 1000,
   isVisible: true,
+  isHidden: false,
+  animationState: 'idle',
 };
 
 function clamp(value, min, max) {
@@ -37,6 +69,8 @@ function chooseNextTarget() {
   buddyState.targetY = targetY;
   buddyState.moving = true;
   buddyState.nextDecisionTime = performance.now() + 2500 + Math.random() * 2200;
+  buddyState.animationState = 'idle';
+  buddy.classList.remove('buddy-wave', 'buddy-surprised');
   console.log('Buddy chooses new target', targetX, targetY);
 }
 
@@ -95,11 +129,10 @@ function updateBuddyStyle() {
   const x = Number(buddyState.x.toFixed(2));
   const y = Number(buddyState.y.toFixed(2));
   buddy.style.transform = `translate(${x}px, ${y}px)`;
-  console.log('Buddy updated at', x, y, 'visible?', buddyState.isVisible);
 }
 
 function tick(now) {
-  if (!buddyState.isVisible) {
+  if (!buddyState.isVisible || buddyState.isHidden) {
     buddyState.lastStepTime = now;
     requestAnimationFrame(tick);
     return;
@@ -134,14 +167,51 @@ function onResize() {
   updateBuddyStyle();
 }
 
-function onClick() {
+function onClick(e) {
+  e.stopPropagation();
   console.log('Buddy clicked at', buddyState.x, buddyState.y);
-  buddy.classList.add('buddy-clicked');
-  setTimeout(() => buddy.classList.remove('buddy-clicked'), 400);
+  
+  // Randomly choose wave or surprised animation
+  const animations = ['buddy-wave', 'buddy-surprised'];
+  const chosen = animations[Math.floor(Math.random() * animations.length)];
+  
+  buddy.classList.remove('buddy-wave', 'buddy-surprised');
+  buddy.classList.add(chosen);
+  
+  buddyState.animationState = chosen;
+  
+  setTimeout(() => {
+    buddy.classList.remove(chosen);
+    buddyState.animationState = 'idle';
+  }, 600);
+}
+
+function onContextMenu(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  console.log('Right-click menu triggered');
+  
+  // Hide the buddy
+  buddy.classList.add('buddy-hidden');
+  buddyState.isHidden = true;
+  
+  // Show it again after 5 seconds
+  setTimeout(() => {
+    buddy.classList.remove('buddy-hidden');
+    buddyState.isHidden = false;
+    console.log('Buddy reappeared');
+  }, 5000);
 }
 
 function initializeBuddy() {
   console.log('Buddy init, viewport', window.innerWidth, window.innerHeight);
+
+  // Get the current sprite config
+  const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+  if (!spriteConfig) {
+    console.error('Sprite config not found for', CURRENT_SPRITE);
+    return;
+  }
 
   // Aggressive visibility reset: clear all inherited styles
   buddy.style.cssText = `
@@ -153,7 +223,11 @@ function initializeBuddy() {
     z-index: 999999 !important;
     display: block !important;
     pointer-events: auto !important;
-    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.8) !important;
+    background-image: url('${spriteConfig.url}') !important;
+    background-repeat: no-repeat !important;
+    background-position: 0 0 !important;
+    background-size: contain !important;
+    animation: buddy-walk ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
   `;
 
   if (!document.body && !document.documentElement) {
@@ -173,6 +247,7 @@ function initializeBuddy() {
   console.log('Buddy Initialized at:', buddyState.x, buddyState.y);
 
   buddy.addEventListener('click', onClick);
+  buddy.addEventListener('contextmenu', onContextMenu);
   window.addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', onVisibilityChange);
 
@@ -185,3 +260,4 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 } else {
   window.addEventListener('DOMContentLoaded', initializeBuddy);
 }
+
