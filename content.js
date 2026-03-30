@@ -22,11 +22,12 @@ function clamp(value, min, max) {
 }
 
 function randomTarget() {
-  const padding = 64;
+  const padding = 100; // 50px margin on each side
   const w = Math.max(window.innerWidth, 128);
   const h = Math.max(window.innerHeight, 128);
   const targetX = Math.random() * (w - padding * 2) + padding;
   const targetY = Math.random() * (h - padding * 2) + padding;
+  console.log('Random target generated within bounds:', padding, w - padding, h - padding);
   return { targetX, targetY };
 }
 
@@ -142,20 +143,32 @@ function onClick() {
 function initializeBuddy() {
   console.log('Buddy init, viewport', window.innerWidth, window.innerHeight);
 
-  buddy.style.position = 'fixed';
-  buddy.style.width = '64px';
-  buddy.style.height = '64px';
-  buddy.style.transformOrigin = 'top left';
-  buddy.style.zIndex = '999999';
-  buddy.style.display = 'block';
-  buddy.style.pointerEvents = 'auto';
+  // Aggressive visibility reset: clear all inherited styles
+  buddy.style.cssText = `
+    all: initial !important;
+    position: fixed !important;
+    width: 64px !important;
+    height: 64px !important;
+    transform-origin: top left !important;
+    z-index: 999999 !important;
+    display: block !important;
+    pointer-events: auto !important;
+    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.8) !important;
+  `;
 
-  if (!document.body) {
-    console.warn('document.body not ready, waiting DOMContentLoaded');
+  if (!document.body && !document.documentElement) {
+    console.warn('document.body and documentElement not ready, waiting DOMContentLoaded');
     return;
   }
 
-  document.body.appendChild(buddy);
+  // Top-level injection: attach to <html> to bypass body-level overflow: hidden
+  if (document.documentElement) {
+    document.documentElement.appendChild(buddy);
+    console.log('Buddy appended to documentElement (html tag)');
+  } else if (document.body) {
+    document.body.appendChild(buddy);
+    console.log('Buddy appended to body');
+  }
 
   console.log('Buddy Initialized at:', buddyState.x, buddyState.y);
 
