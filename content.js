@@ -47,6 +47,7 @@ let buddyState = {
   isVisible: true,
   isHidden: false,
   animationState: 'idle',
+  facing: 1,
 };
 
 function clamp(value, min, max) {
@@ -64,14 +65,24 @@ function randomTarget() {
 }
 
 function chooseNextTarget() {
-  const { targetX, targetY } = randomTarget();
+  let attempts = 0;
+  let targetX, targetY, dist;
+
+  do {
+    ({ targetX, targetY } = randomTarget());
+    const dx = targetX - buddyState.x;
+    const dy = targetY - buddyState.y;
+    dist = Math.hypot(dx, dy);
+    attempts += 1;
+  } while (dist < 150 && attempts < 20);
+
   buddyState.targetX = targetX;
   buddyState.targetY = targetY;
   buddyState.moving = true;
   buddyState.nextDecisionTime = performance.now() + 2500 + Math.random() * 2200;
   buddyState.animationState = 'idle';
   buddy.classList.remove('buddy-wave', 'buddy-surprised');
-  console.log('Buddy chooses new target', targetX, targetY);
+  console.log('Buddy chooses new target', targetX, targetY, 'dist', dist, 'attempts', attempts);
 }
 
 function lerp(a, b, t) {
@@ -81,7 +92,7 @@ function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-function updateBuddyPosition(dtSeconds) {
+function updateBuddyPosition(dtSeconds, now) {
   if (!buddyState.moving || buddyState.targetX === null || buddyState.targetY === null) {
     return;
   }
@@ -94,8 +105,16 @@ function updateBuddyPosition(dtSeconds) {
   const dy = buddyState.targetY - buddyState.y;
   const dist = Math.hypot(dx, dy);
 
+  // Flip logic for facing direction
+  if (dx < 0) {
+    buddyState.facing = -1;
+  } else if (dx > 0) {
+    buddyState.facing = 1;
+  }
+
   if (!Number.isFinite(dist) || dist === 0) {
     buddyState.moving = false;
+    buddyState.nextDecisionTime = now + 3000;
     buddyState.x = clamp(buddyState.x, 0, window.innerWidth - 64);
     buddyState.y = clamp(buddyState.y, 0, window.innerHeight - 64);
     return;
@@ -107,6 +126,7 @@ function updateBuddyPosition(dtSeconds) {
     buddyState.x = buddyState.targetX;
     buddyState.y = buddyState.targetY;
     buddyState.moving = false;
+    buddyState.nextDecisionTime = now + 3000;
   } else {
     const progress = maxDist / dist;
     buddyState.x = lerp(buddyState.x, buddyState.targetX, progress);
@@ -119,6 +139,7 @@ function updateBuddyPosition(dtSeconds) {
     buddyState.x = Math.max(100, window.innerWidth / 2);
     buddyState.y = Math.max(100, window.innerHeight / 2);
     buddyState.moving = false;
+    buddyState.nextDecisionTime = now + 3000;
   }
 
   buddyState.x = clamp(buddyState.x, 0, window.innerWidth - 64);
@@ -128,7 +149,7 @@ function updateBuddyPosition(dtSeconds) {
 function updateBuddyStyle() {
   const x = Number(buddyState.x.toFixed(2));
   const y = Number(buddyState.y.toFixed(2));
-  buddy.style.transform = `translate(${x}px, ${y}px)`;
+  buddy.style.transform = `translate(${x}px, ${y}px) scaleX(${buddyState.facing})`;
 }
 
 function tick(now) {
@@ -145,7 +166,7 @@ function tick(now) {
     chooseNextTarget();
   }
 
-  updateBuddyPosition(dtSeconds);
+  updateBuddyPosition(dtSeconds, now);
   updateBuddyStyle();
 
   requestAnimationFrame(tick);
@@ -213,6 +234,11 @@ function initializeBuddy() {
     return;
   }
 
+  // Asset path check: ensure we are using the expected pig sprite path
+  if (!spriteConfig.url.endsWith('/assets/sprites/pig-idle.png')) {
+    console.warn('Sprite URL is not pig-idle path:', spriteConfig.url);
+  }
+
   // Aggressive visibility reset: clear all inherited styles
   buddy.style.cssText = `
     all: initial !important;
@@ -226,7 +252,7 @@ function initializeBuddy() {
     background-image: url('${spriteConfig.url}') !important;
     background-repeat: no-repeat !important;
     background-position: 0 0 !important;
-    background-size: contain !important;
+    background-size: auto 64px !important;
     animation: buddy-walk ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
   `;
 
@@ -235,14 +261,24 @@ function initializeBuddy() {
     return;
   }
 
-  // Top-level injection: attach to <html> to bypass body-level overflow: hidden
-  if (document.documentElement) {
-    document.documentElement.appendChild(buddy);
-    console.log('Buddy appended to documentElement (html tag)');
-  } else if (document.body) {
-    document.body.appendChild(buddy);
-    console.log('Buddy appended to body');
+  // Top-level injection: use a shadow root container to isolate from page CSS
+  let container = document.getElementById('buddy-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'buddy-container';
+    container.style.all = 'initial';
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '0';
+    container.style.height = '0';
+    container.style.zIndex = '999999';
+    document.documentElement.appendChild(container);
   }
+
+  const shadowRoot = container.shadowRoot || container.attachShadow({ mode: 'open' });
+  shadowRoot.appendChild(buddy);
+  console.log('Buddy appended to #buddy-container shadow DOM');
 
   console.log('Buddy Initialized at:', buddyState.x, buddyState.y);
 
