@@ -244,8 +244,8 @@ function initializeBuddy() {
   }
 
   // Aggressive visibility reset: clear all inherited styles
+  // all: initial !important; (removed this line to see if this was the reason for character not moving)
   buddy.style.cssText = `
-    all: initial !important;
     position: fixed !important;
     width: 64px !important;
     height: 64px !important;
