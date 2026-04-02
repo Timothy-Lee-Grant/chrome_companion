@@ -70,6 +70,7 @@ function randomTarget(currentX, currentY, maxRadius = 200) {
 }
 
 function chooseNextTarget() {
+  console.log('chooseNextTarget triggered at', buddyState.x.toFixed(1), buddyState.y.toFixed(1));
   const { targetX, targetY } = randomTarget(buddyState.x, buddyState.y, 200);
   buddyState.targetX = targetX;
   buddyState.targetY = targetY;
@@ -159,6 +160,11 @@ function tick(now) {
 
   const dtSeconds = (now - buddyState.lastStepTime) / 1000;
   buddyState.lastStepTime = now;
+  if (dtSeconds <= 0) {
+    // ensure we get a fresh delta in the next frame
+    requestAnimationFrame(tick);
+    return;
+  }
 
   if (now >= buddyState.nextDecisionTime && !buddyState.moving) {
     chooseNextTarget();
@@ -285,7 +291,9 @@ function initializeBuddy() {
   window.addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', onVisibilityChange);
 
-  buddyState.nextDecisionTime = performance.now() + 800;
+  // Start immediately: place buddy at initial position and schedule first move now
+  buddyState.nextDecisionTime = performance.now();
+  updateBuddyStyle();
   requestAnimationFrame(tick);
 }
 
