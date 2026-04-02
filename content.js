@@ -54,35 +54,33 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function randomTarget() {
-  const padding = 100; // 50px margin on each side
-  const w = Math.max(window.innerWidth, 128);
-  const h = Math.max(window.innerHeight, 128);
-  const targetX = Math.random() * (w - padding * 2) + padding;
-  const targetY = Math.random() * (h - padding * 2) + padding;
-  console.log('Random target generated within bounds:', padding, w - padding, h - padding);
+function randomTarget(currentX, currentY, maxRadius = 200) {
+  const angle = Math.random() * 2 * Math.PI;
+  const dist = Math.random() * maxRadius;
+  let targetX = currentX + dist * Math.cos(angle);
+  let targetY = currentY + dist * Math.sin(angle);
+
+  // Clamp to viewport bounds
+  const padding = 100;
+  targetX = clamp(targetX, padding, window.innerWidth - padding - 64);
+  targetY = clamp(targetY, padding, window.innerHeight - padding - 64);
+
+  console.log('Controlled target generated within radius:', maxRadius, 'from', currentX.toFixed(1), currentY.toFixed(1), 'to', targetX.toFixed(1), targetY.toFixed(1), 'dist', dist.toFixed(1));
   return { targetX, targetY };
 }
 
 function chooseNextTarget() {
-  let attempts = 0;
-  let targetX, targetY, dist;
-
-  do {
-    ({ targetX, targetY } = randomTarget());
-    const dx = targetX - buddyState.x;
-    const dy = targetY - buddyState.y;
-    dist = Math.hypot(dx, dy);
-    attempts += 1;
-  } while (dist < 150 && attempts < 20);
-
+  const { targetX, targetY } = randomTarget(buddyState.x, buddyState.y, 200);
   buddyState.targetX = targetX;
   buddyState.targetY = targetY;
   buddyState.moving = true;
   buddyState.nextDecisionTime = performance.now() + 2500 + Math.random() * 2200;
   buddyState.animationState = 'idle';
   buddy.classList.remove('buddy-wave', 'buddy-surprised');
-  console.log('Buddy chooses new target', targetX, targetY, 'dist', dist, 'attempts', attempts);
+  const dx = targetX - buddyState.x;
+  const dy = targetY - buddyState.y;
+  const dist = Math.hypot(dx, dy);
+  console.log('Buddy chooses controlled target', targetX.toFixed(1), targetY.toFixed(1), 'dist', dist.toFixed(1));
 }
 
 function lerp(a, b, t) {

@@ -6,10 +6,10 @@
 - Understand current behavior: random targets with minimum distance check (150px), 3s rest after arrival.
 - Confirm sprite flipping is working based on horizontal direction.
 
-## Phase 2: Modify Target Selection for Controlled Movement
-- Change `randomTarget()` to generate targets within a smaller radius (e.g., 200-300px from current position) instead of full viewport.
+## Phase 2: Modify Target Selection for Controlled Movement ✅
+- Change `randomTarget()` to generate targets within a smaller radius (200px from current position) instead of full viewport.
 - Ensure targets are chosen to allow 1-2 second leisurely travel at current speed (80px/sec).
-- Remove or adjust the minimum distance loop since targets will be closer by design.
+- Remove minimum distance loop since targets will be closer by design.
 - Update console logs to reflect new target selection logic.
 
 ## Phase 3: Implement Linear Movement with Pauses
