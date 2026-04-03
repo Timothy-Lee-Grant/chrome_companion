@@ -37,7 +37,6 @@
   z-index: 999999 !important;
   display: block !important;
   pointer-events: auto !important;
-  transform-origin: center !important;
 }
 
 .buddy-wave {

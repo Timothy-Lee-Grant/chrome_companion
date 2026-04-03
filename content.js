@@ -148,7 +148,10 @@ function updateBuddyPosition(dtSeconds, now) {
 function updateBuddyStyle() {
   const x = Number(buddyState.x.toFixed(2));
   const y = Number(buddyState.y.toFixed(2));
-  // Apply scaleX from center (transform-origin) to prevent flip teleportation
+  // Set transform-origin based on facing direction to prevent teleportation on flip
+  // When facing right (1), origin is left. When facing left (-1), origin is right.
+  const originX = buddyState.facing === 1 ? 'left' : 'right';
+  buddy.style.transformOrigin = `${originX} center`;
   buddy.style.transform = `translate(${x}px, ${y}px) scaleX(${buddyState.facing})`;
 }
 
