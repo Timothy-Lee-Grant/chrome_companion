@@ -369,6 +369,7 @@ function initializeBuddy() {
   shadowStyleSheet.textContent = keyframes;
   
   // Bundle animation into cssText with !important so it has equal weight as background-position
+  // background-size: auto 64px !important; attempting to move this out to see if I can get the animations to play correctly
   buddy.style.cssText = `
     position: fixed !important;
     width: 64px !important;
@@ -380,7 +381,7 @@ function initializeBuddy() {
     background-image: url('${spriteConfig.url}') !important;
     background-repeat: no-repeat !important;
     background-position: 0 0 !important;
-    background-size: auto 64px !important;
+    background-size: ${totalWidth}px ${spriteConfig.frameHeight}px !important;
     animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
   `;
 
