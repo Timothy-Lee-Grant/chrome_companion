@@ -346,21 +346,8 @@ function initializeBuddy() {
 
   // Aggressive visibility reset: clear all inherited styles
   // all: initial !important; (removed this line to see if this was the reason for character not moving)
-  buddy.style.cssText = `
-    position: fixed !important;
-    width: 64px !important;
-    height: 64px !important;
-    transform-origin: top left !important;
-    z-index: 999999 !important;
-    display: block !important;
-    pointer-events: auto !important;
-    background-image: url('${spriteConfig.url}') !important;
-    background-repeat: no-repeat !important;
-    background-position: 0 0 !important;
-    background-size: auto 64px !important;
-  `;
   
-  // Generate and apply initial animation via dynamic keyframes in shadow DOM
+  // Generate keyframes FIRST before setting styles
   const totalWidth = spriteConfig.frameCount * spriteConfig.frameWidth;
   const animationName = `buddy-walk-${CURRENT_SPRITE}`;
   const keyframes = `
@@ -381,7 +368,21 @@ function initializeBuddy() {
   }
   shadowStyleSheet.textContent = keyframes;
   
-  buddy.style.animation = `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important`;
+  // Bundle animation into cssText with !important so it has equal weight as background-position
+  buddy.style.cssText = `
+    position: fixed !important;
+    width: 64px !important;
+    height: 64px !important;
+    transform-origin: top left !important;
+    z-index: 999999 !important;
+    display: block !important;
+    pointer-events: auto !important;
+    background-image: url('${spriteConfig.url}') !important;
+    background-repeat: no-repeat !important;
+    background-position: 0 0 !important;
+    background-size: auto 64px !important;
+    animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
+  `;
 
 
   if (!document.body && !document.documentElement) {
@@ -406,7 +407,7 @@ function initializeBuddy() {
 
   const shadowRoot = container.shadowRoot || container.attachShadow({ mode: 'open' });
   
-  // Add the keyframes style element to the shadow DOM (not document head!)
+  // Add the keyframes style element to the shadow DOM BEFORE appending buddy
   if (!shadowStyleSheet.parentNode || shadowStyleSheet.parentNode !== shadowRoot) {
     shadowRoot.appendChild(shadowStyleSheet);
   }
