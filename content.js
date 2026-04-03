@@ -22,7 +22,7 @@ const SPRITE_CONFIG = {
     url: chrome.runtime.getURL('assets/sprites/cat-jump.png'),
     frameWidth: 64,
     frameHeight: 32,
-    frameCount: 6.5,
+    frameCount: 13, //previously AI agent assigned this to be 6.5 (which is wrong for TWO REASONS!!! First there are 13 frames on visual inspection, secondly we can't even have a half frame logically!!) (This indicates that the AI agent was just looking at the length of the image and guessing how many frames should be there (I thought it was getting the information from metadata within the image itself!))
     animationDuration: 0.6,
     defaultState: 'jump',
   },
@@ -30,7 +30,7 @@ const SPRITE_CONFIG = {
     url: chrome.runtime.getURL('assets/sprites/Jumping.png'),
     frameWidth: 64,
     frameHeight: 64,
-    frameCount: 4,
+    frameCount: 11, //previously AI agent assigned this to be 4
     animationDuration: 0.6,
     defaultState: 'jump',
   },
@@ -38,7 +38,7 @@ const SPRITE_CONFIG = {
     url: chrome.runtime.getURL('assets/sprites/BirdFly.png'),
     frameWidth: 64,
     frameHeight: 64,
-    frameCount: 4,
+    frameCount: 8, //previously AI agent assigned this to be 4,
     animationDuration: 0.5,
     defaultState: 'fly',
   },
@@ -382,7 +382,7 @@ function initializeBuddy() {
     background-repeat: no-repeat !important;
     background-position: 0 0 !important;
     background-size: ${totalWidth}px ${spriteConfig.frameHeight}px !important;
-    animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
+    animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite;
   `;
 
 
