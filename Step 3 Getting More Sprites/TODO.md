@@ -7,6 +7,9 @@ Fix sprite flipping and facing direction bugs, implement sprite-cycling keyboard
 - `pig-idle.png` (64x64, 4 frames)
 - `dog-bark.png` (64x64, 11 frames)
 - `cat-jump.png` (64x32, 6.5 frames)
+- `Jumping.png` (this is a bunny, but the name is not descriptive)
+- `BirdFly.png`
+- `FrogIdle.png`
 
 ---
 
@@ -26,7 +29,7 @@ Fix sprite flipping and facing direction bugs, implement sprite-cycling keyboard
 - **Keyboard Shortcut**: `Alt+S` (arbitrary choice - cycles through next sprite)
 - Add keyboard event listener in `content.js`.
 - Create sprite index tracker: `currentSpriteIndex` in `buddyState`.
-- Build sprite name array: `['pig-idle', 'dog-bark', 'cat-jump']`.
+- Build sprite name array: `['pig-idle', 'dog-bark', 'cat-jump', etc]`.
 - On `Alt+S`:
   - Increment index (mod sprite count).
   - Update `CURRENT_SPRITE`.

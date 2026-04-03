@@ -104,11 +104,11 @@ function updateBuddyPosition(dtSeconds, now) {
   const dy = buddyState.targetY - buddyState.y;
   const dist = Math.hypot(dx, dy);
 
-  // Flip logic for facing direction
+  // Flip logic for facing direction (inverted: moving left means face right)
   if (dx < 0) {
-    buddyState.facing = -1;
+    buddyState.facing = 1;  // moving left, face right
   } else if (dx > 0) {
-    buddyState.facing = 1;
+    buddyState.facing = -1; // moving right, face left
   }
 
   if (!Number.isFinite(dist) || dist === 0) {
@@ -148,6 +148,7 @@ function updateBuddyPosition(dtSeconds, now) {
 function updateBuddyStyle() {
   const x = Number(buddyState.x.toFixed(2));
   const y = Number(buddyState.y.toFixed(2));
+  // Apply scaleX from center (transform-origin) to prevent flip teleportation
   buddy.style.transform = `translate(${x}px, ${y}px) scaleX(${buddyState.facing})`;
 }
 
