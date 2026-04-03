@@ -26,9 +26,36 @@ const SPRITE_CONFIG = {
     animationDuration: 0.6,
     defaultState: 'jump',
   },
+  'jumping': {
+    url: chrome.runtime.getURL('assets/sprites/Jumping.png'),
+    frameWidth: 64,
+    frameHeight: 64,
+    frameCount: 4,
+    animationDuration: 0.6,
+    defaultState: 'jump',
+  },
+  'bird-fly': {
+    url: chrome.runtime.getURL('assets/sprites/BirdFly.png'),
+    frameWidth: 64,
+    frameHeight: 64,
+    frameCount: 4,
+    animationDuration: 0.5,
+    defaultState: 'fly',
+  },
+  'frog-idle': {
+    url: chrome.runtime.getURL('assets/sprites/FrogIdle.png'),
+    frameWidth: 64,
+    frameHeight: 64,
+    frameCount: 4,
+    animationDuration: 0.8,
+    defaultState: 'idle',
+  },
 };
 
-const CURRENT_SPRITE = 'pig-idle';
+// Sprite list for cycling (Alt+S)
+const SPRITE_LIST = ['pig-idle', 'dog-bark', 'cat-jump', 'jumping', 'bird-fly', 'frog-idle'];
+let currentSpriteIndex = 0;
+let CURRENT_SPRITE = SPRITE_LIST[currentSpriteIndex];
 
 const buddy = document.createElement('div');
 buddy.id = 'screen-buddy';
@@ -48,6 +75,7 @@ let buddyState = {
   isHidden: false,
   animationState: 'idle',
   facing: 1,
+  scale: 1.0,
 };
 
 function clamp(value, min, max) {
@@ -152,7 +180,7 @@ function updateBuddyStyle() {
   // When facing right (1), origin is left. When facing left (-1), origin is right.
   const originX = buddyState.facing === 1 ? 'left' : 'right';
   buddy.style.transformOrigin = `${originX} center`;
-  buddy.style.transform = `translate(${x}px, ${y}px) scaleX(${buddyState.facing})`;
+  buddy.style.transform = `translate(${x}px, ${y}px) scaleX(${buddyState.facing}) scale(${buddyState.scale})`;
 }
 
 function tick(now) {
@@ -232,6 +260,52 @@ function onContextMenu(e) {
   }, 5000);
 }
 
+function cycleSpriteForward() {
+  // Cycle to next sprite (Alt+S)
+  currentSpriteIndex = (currentSpriteIndex + 1) % SPRITE_LIST.length;
+  CURRENT_SPRITE = SPRITE_LIST[currentSpriteIndex];
+  updateBuddySprite();
+  console.log('Sprite cycled to:', CURRENT_SPRITE);
+}
+
+function updateBuddySprite() {
+  // Update sprite configuration dynamically
+  const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+  if (!spriteConfig) {
+    console.error('Sprite config not found for', CURRENT_SPRITE);
+    return;
+  }
+
+  // Update buddy element with new sprite and animation config
+  buddy.style.backgroundImage = `url('${spriteConfig.url}')`;
+  buddy.style.animation = `buddy-walk ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important`;
+  
+  // Update dimensions if needed (some sprites have different heights)
+  buddy.style.height = `${spriteConfig.frameHeight}px !important`;
+}
+
+function onKeyDown(e) {
+  // Alt+S: Cycle sprite
+  if (e.altKey && e.key === 's') {
+    e.preventDefault();
+    cycleSpriteForward();
+  }
+  
+  // Alt+[: Shrink sprite
+  if (e.altKey && e.key === '[') {
+    e.preventDefault();
+    buddyState.scale = Math.max(0.5, buddyState.scale - 0.2);
+    console.log('Sprite scaled down to:', buddyState.scale.toFixed(1));
+  }
+  
+  // Alt+]: Grow sprite
+  if (e.altKey && e.key === ']') {
+    e.preventDefault();
+    buddyState.scale = Math.min(2.0, buddyState.scale + 0.2);
+    console.log('Sprite scaled up to:', buddyState.scale.toFixed(1));
+  }
+}
+
 function initializeBuddy() {
   console.log('Buddy init, viewport', window.innerWidth, window.innerHeight);
 
@@ -294,8 +368,8 @@ function initializeBuddy() {
   buddy.addEventListener('contextmenu', onContextMenu);
   window.addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', onVisibilityChange);
+  document.addEventListener('keydown', onKeyDown);
 
-  // Start immediately: place buddy at initial position and schedule first move now
   buddyState.nextDecisionTime = performance.now();
   updateBuddyStyle();
   requestAnimationFrame(tick);
