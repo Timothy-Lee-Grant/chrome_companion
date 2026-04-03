@@ -61,6 +61,9 @@ const buddy = document.createElement('div');
 buddy.id = 'screen-buddy';
 buddy.className = 'buddy';
 
+// Reference to shadow root's style element (set later in initializeBuddy)
+let shadowStyleSheet = null;
+
 // Start position in the middle of the viewport (or fallback 100x100)
 let buddyState = {
   x: Math.max(100, window.innerWidth / 2),
@@ -276,12 +279,32 @@ function updateBuddySprite() {
     return;
   }
 
+  // Generate dynamic keyframes for this sprite based on frame count
+  const totalWidth = spriteConfig.frameCount * spriteConfig.frameWidth;
+  const animationName = `buddy-walk-${CURRENT_SPRITE}`;
+  const keyframes = `
+    @keyframes ${animationName} {
+      from {
+        background-position: 0 0;
+      }
+      to {
+        background-position: -${totalWidth}px 0;
+      }
+    }
+  `;
+  
+  // Update the shadow DOM's stylesheet
+  if (shadowStyleSheet) {
+    shadowStyleSheet.textContent = keyframes;
+  }
+
   // Update buddy element with new sprite and animation config
   buddy.style.backgroundImage = `url('${spriteConfig.url}')`;
-  buddy.style.animation = `buddy-walk ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important`;
+  buddy.style.animation = `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important`;
   
   // Update dimensions if needed (some sprites have different heights)
   buddy.style.height = `${spriteConfig.frameHeight}px !important`;
+  console.log('Sprite animation updated for:', CURRENT_SPRITE, 'Total width:', totalWidth, 'Frame count:', spriteConfig.frameCount);
 }
 
 function onKeyDown(e) {
@@ -335,8 +358,31 @@ function initializeBuddy() {
     background-repeat: no-repeat !important;
     background-position: 0 0 !important;
     background-size: auto 64px !important;
-    animation: buddy-walk ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
   `;
+  
+  // Generate and apply initial animation via dynamic keyframes in shadow DOM
+  const totalWidth = spriteConfig.frameCount * spriteConfig.frameWidth;
+  const animationName = `buddy-walk-${CURRENT_SPRITE}`;
+  const keyframes = `
+    @keyframes ${animationName} {
+      from {
+        background-position: 0 0;
+      }
+      to {
+        background-position: -${totalWidth}px 0;
+      }
+    }
+  `;
+  
+  // Create keyframes stylesheet and add it to shadow DOM (not document head)
+  if (!shadowStyleSheet) {
+    shadowStyleSheet = document.createElement('style');
+    shadowStyleSheet.id = 'buddy-animations';
+  }
+  shadowStyleSheet.textContent = keyframes;
+  
+  buddy.style.animation = `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important`;
+
 
   if (!document.body && !document.documentElement) {
     console.warn('document.body and documentElement not ready, waiting DOMContentLoaded');
@@ -359,6 +405,12 @@ function initializeBuddy() {
   }
 
   const shadowRoot = container.shadowRoot || container.attachShadow({ mode: 'open' });
+  
+  // Add the keyframes style element to the shadow DOM (not document head!)
+  if (!shadowStyleSheet.parentNode || shadowStyleSheet.parentNode !== shadowRoot) {
+    shadowRoot.appendChild(shadowStyleSheet);
+  }
+  
   shadowRoot.appendChild(buddy);
   console.log('Buddy appended to #buddy-container shadow DOM');
 
