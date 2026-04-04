@@ -272,6 +272,15 @@ function startPoofAnimation() {
   }, poofConfig.animationDuration * 1000);
 }
 
+function getWalkAnimation() {
+  const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+  if (!spriteConfig) {
+    return '';
+  }
+  const animationName = `buddy-walk-${CURRENT_SPRITE}`;
+  return `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`;
+}
+
 function tick(now) {
   if (!buddyState.isVisible || buddyState.isHidden) {
     buddyState.lastStepTime = now;
