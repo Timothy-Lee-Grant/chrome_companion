@@ -506,6 +506,12 @@ function initializeBuddy() {
       }
     `;
   }
+
+  // Create dynamic keyframes stylesheet for sprite animations
+  if (!shadowStyleSheet) {
+    shadowStyleSheet = document.createElement('style');
+    shadowStyleSheet.id = 'buddy-dynamic-animations';
+  }
   
 
   // Set ONLY the structural "Window" styles here
@@ -542,15 +548,15 @@ function initializeBuddy() {
   const shadowRoot = container.shadowRoot || container.attachShadow({ mode: 'open' });
   
   // Add the keyframes style elements to the shadow DOM BEFORE appending buddy
-  if (!shadowStaticStyleSheet.parentNode || shadowStaticStyleSheet.parentNode !== shadowRoot) {
+  if (shadowStaticStyleSheet && (!shadowStaticStyleSheet.parentNode || shadowStaticStyleSheet.parentNode !== shadowRoot)) {
     shadowRoot.appendChild(shadowStaticStyleSheet);
   }
   
-  if (!shadowStyleSheet.parentNode || shadowStyleSheet.parentNode !== shadowRoot) {
+  if (shadowStyleSheet && (!shadowStyleSheet.parentNode || shadowStyleSheet.parentNode !== shadowRoot)) {
     shadowRoot.appendChild(shadowStyleSheet);
   }
   
-  if (!poofStyleSheet.parentNode || poofStyleSheet.parentNode !== shadowRoot) {
+  if (poofStyleSheet && (!poofStyleSheet.parentNode || poofStyleSheet.parentNode !== shadowRoot)) {
     shadowRoot.appendChild(poofStyleSheet);
   }
   
