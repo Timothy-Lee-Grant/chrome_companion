@@ -9,6 +9,7 @@ const SPRITE_CONFIG = {
     frameCount: 4,
     animationDuration: 0.8, // seconds for full loop
     defaultState: 'idle',
+    invertFacing: false,
   },
   'dog-bark': {
     url: chrome.runtime.getURL('assets/sprites/dog-bark.png'),
@@ -17,6 +18,7 @@ const SPRITE_CONFIG = {
     frameCount: 11,
     animationDuration: 1.2,
     defaultState: 'bark',
+    invertFacing: true,
   },
   'cat-jump': {
     url: chrome.runtime.getURL('assets/sprites/cat-jump.png'),
@@ -25,6 +27,7 @@ const SPRITE_CONFIG = {
     frameCount: 13,
     animationDuration: 0.6,
     defaultState: 'jump',
+    invertFacing: true,
   },
   'jumping': {
     url: chrome.runtime.getURL('assets/sprites/Jumping.png'),
@@ -33,6 +36,7 @@ const SPRITE_CONFIG = {
     frameCount: 11,
     animationDuration: 0.6,
     defaultState: 'jump',
+    invertFacing: true,
   },
   'bird-fly': {
     url: chrome.runtime.getURL('assets/sprites/BirdFly.png'),
@@ -41,6 +45,7 @@ const SPRITE_CONFIG = {
     frameCount: 8,
     animationDuration: 0.5,
     defaultState: 'fly',
+    invertFacing: true,
   },
   'frog-idle': {
     url: chrome.runtime.getURL('assets/sprites/FrogIdle.png'),
@@ -49,6 +54,7 @@ const SPRITE_CONFIG = {
     frameCount: 4,
     animationDuration: 0.8,
     defaultState: 'idle',
+    invertFacing: false,
   },
 };
 
@@ -137,10 +143,12 @@ function updateBuddyPosition(dtSeconds, now) {
   const dist = Math.hypot(dx, dy);
 
   // Flip logic for facing direction
+  const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+  const invertFacing = spriteConfig ? spriteConfig.invertFacing : false;
   if (dx < 0) {
-    buddyState.facing = -1;  // moving left, face left
+    buddyState.facing = invertFacing ? -1 : 1;  // moving left
   } else if (dx > 0) {
-    buddyState.facing = 1; // moving right, face right
+    buddyState.facing = invertFacing ? 1 : -1; // moving right
   }
 
   if (!Number.isFinite(dist) || dist === 0) {
