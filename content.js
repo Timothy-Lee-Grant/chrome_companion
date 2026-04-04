@@ -79,6 +79,7 @@ let buddyState = {
   animationState: 'idle',
   facing: 1,
   scale: 1.0,
+  inCorner: false,
 };
 
 function clamp(value, min, max) {
@@ -135,11 +136,11 @@ function updateBuddyPosition(dtSeconds, now) {
   const dy = buddyState.targetY - buddyState.y;
   const dist = Math.hypot(dx, dy);
 
-  // Flip logic for facing direction (inverted: moving left means face right)
+  // Flip logic for facing direction
   if (dx < 0) {
-    buddyState.facing = 1;  // moving left, face right
+    buddyState.facing = -1;  // moving left, face left
   } else if (dx > 0) {
-    buddyState.facing = -1; // moving right, face left
+    buddyState.facing = 1; // moving right, face right
   }
 
   if (!Number.isFinite(dist) || dist === 0) {
@@ -216,7 +217,7 @@ function tick(now) {
     return;
   }
 
-  if (now >= buddyState.nextDecisionTime && !buddyState.moving) {
+  if (now >= buddyState.nextDecisionTime && !buddyState.moving && !buddyState.inCorner) {
     chooseNextTarget();
   }
 
@@ -245,6 +246,24 @@ function onResize() {
 function onClick(e) {
   e.stopPropagation();
   console.log('Buddy clicked at', buddyState.x, buddyState.y);
+  
+  if (!buddyState.inCorner) {
+    // Move to top-left corner and stop exploring
+    buddyState.x = 0;
+    buddyState.y = 0;
+    buddyState.moving = false;
+    buddyState.targetX = null;
+    buddyState.targetY = null;
+    buddyState.inCorner = true;
+    buddyState.nextDecisionTime = performance.now() + 999999; // Prevent auto movement
+    updateBuddyStyle();
+    console.log('Buddy moved to corner');
+  } else {
+    // Resume exploring
+    buddyState.inCorner = false;
+    buddyState.nextDecisionTime = performance.now(); // Allow immediate movement
+    console.log('Buddy resumed exploring');
+  }
   
   // Randomly choose wave or surprised animation
   const animations = ['buddy-wave', 'buddy-surprised'];
