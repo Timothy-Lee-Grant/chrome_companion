@@ -57,10 +57,10 @@ const SPRITE_CONFIG = {
     invertFacing: false,
   },
   'poof-cloud': {
-    url: chrome.runtime.getURL('assets/sprites/Poof_Animation.png'),
+    url: chrome.runtime.getURL('assets/sprites/Poof_Animation_2.png'),
     frameWidth: 32,
     frameHeight: 32,
-    frameCount: 16,
+    frameCount: 14,
     animationDuration: 0.8,
     defaultState: 'poof',
     invertFacing: false, // Not applicable for cloud
@@ -249,8 +249,8 @@ function startPoofAnimation() {
   poofElement.style.animation = `${animationName} ${poofConfig.animationDuration}s steps(${poofConfig.frameCount})`;
   poofElement.style.display = 'block';
   
-  // Schedule teleport at frame 6 (37.5% through animation)
-  const teleportDelay = 0.375 * poofConfig.animationDuration * 1000; // ms
+  // Schedule teleport at frame 6 (~42.9% through 14-frame animation)
+  const teleportDelay = 0.4286 * poofConfig.animationDuration * 1000; // ms
   setTimeout(() => {
     console.log('Teleporting buddy to corner at frame 6');
     buddyState.x = 0;

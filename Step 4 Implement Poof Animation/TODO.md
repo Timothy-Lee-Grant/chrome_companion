@@ -4,21 +4,21 @@
 Implement a "poof" cloud animation that plays when the user clicks the buddy while it's exploring. The poof cloud builds over the buddy, teleports the buddy to the corner at frame 6, then continues the animation as the cloud dissipates. This only triggers when clicking to go to corner (not when resuming from corner).
 
 **Poof Sprite Details:**
-- File: `Poof_Animation.png` (128x128px, 16 frames in 4x4 grid)
-- Frame layout: 4 columns (x: 0-3), 4 rows (y: 0-3)
-- Frame sequence: (0,0), (1,0), (2,0), (3,0), (0,1), (1,1), (2,1), (3,1), (0,2), (1,2), (2,2), (3,2), (0,3), (1,3), (2,3), (3,3)
-- Frame size: 32x32px each (128/4 = 32)
-- Total frames: 16
-- Animation timing: ~0.8-1.0 seconds total (adjust based on feel)
+- File: `Poof_Animation_2.png` (448x32px, 14 frames in single row)
+- Frame layout: 14 columns (x: 0-13), 1 row
+- Frame sequence: Left to right (0 to 13)
+- Frame size: 32x32px each (448/14 = 32)
+- Total frames: 14
+- Animation timing: ~0.8 seconds total (adjust based on feel)
 
 ---
 
 ## Phase 1: Add Poof Sprite Configuration
 - **Add to SPRITE_CONFIG**: Create entry for 'poof-cloud' with:
-  - `url`: `chrome.runtime.getURL('assets/sprites/Poof_Animation.png')`
+  - `url`: `chrome.runtime.getURL('assets/sprites/Poof_Animation_2.png')`
   - `frameWidth`: 32
   - `frameHeight`: 32
-  - `frameCount`: 16
+  - `frameCount`: 14
   - `animationDuration`: 0.8 (or adjust for smooth playback)
   - `defaultState`: 'poof'
 - **Update SPRITE_LIST**: Do NOT add 'poof-cloud' to cycling list (it's not a buddy sprite)
@@ -33,7 +33,7 @@ Implement a "poof" cloud animation that plays when the user clicks the buddy whi
 - **Visibility**: Hidden by default, shown only during poof animation
 - **Z-index**: Higher than buddy (z-index: 999998) so it covers the buddy
 - **Size**: 32x32px (matches frame size)
-- **Animation**: Uses steps(16) for frame-by-frame playback
+- **Animation**: Uses steps(14) for frame-by-frame playback
 
 ---
 
@@ -41,8 +41,8 @@ Implement a "poof" cloud animation that plays when the user clicks the buddy whi
 - **Poof state management**: Add `buddyState.isPoofing = false` to track poof state
 - **Animation keyframes**: Generate dynamic keyframes for poof sprite (similar to buddy walk)
 - **Timing control**: Use setTimeout or animation events to trigger teleport at frame 6
-- **Frame calculation**: Frame 6 corresponds to ~37.5% through 16-frame animation (6/16 = 0.375)
-- **Teleport timing**: At 0.375 * animationDuration seconds, move buddy to corner
+- **Frame calculation**: Frame 6 corresponds to ~42.9% through 14-frame animation (6/14 ≈ 0.4286)
+- **Teleport timing**: At 0.4286 * animationDuration seconds, move buddy to corner
 - **Animation completion**: Hide poof element and reset states when animation ends
 
 ---
@@ -106,3 +106,20 @@ Poof_Animation_2.png PNG 448x32 448x32+0+0 8-bit sRGB 1332B 0.000u 0:00.000
 Animation is from left to right. Poof_Animation_2 has 14 frames in it.
 
 Change the animation, to now implement this png as the poof instead of the previous Poof_Animation.png (which was a 4x4 grid png). This updated Poof_Animation_2.png is a single row of 14 frames.
+
+---
+
+## Phase 10: Update Poof Animation to Use Poof_Animation_2.png
+- **Update SPRITE_CONFIG**: Modify the 'poof-cloud' entry to use the new sprite:
+  - Change `url` to `chrome.runtime.getURL('assets/sprites/Poof_Animation_2.png')`
+  - Update `frameCount` from 16 to 14
+  - Keep `frameWidth`: 32 (448px total width / 14 frames = 32px per frame)
+  - Keep `frameHeight`: 32
+  - Adjust `animationDuration` if needed (consider keeping ~0.8s or calculate as 14 frames at desired fps)
+- **Recalculate teleport timing**: Original teleport at frame 6 of 16 (37.5%). For 14 frames, frame 6 is ~42.9% (6/14 ≈ 0.4286). Update the teleport delay calculation in `startPoofAnimation()` to use `0.4286 * animationDuration * 1000` ms
+- **Update manifest.json**: Ensure `web_accessible_resources` includes `"assets/sprites/Poof_Animation_2.png"` (remove old Poof_Animation.png if no longer needed)
+- **Verify sprite loading**: Test that the new sprite loads correctly and animation plays smoothly with 14 frames
+- **Adjust animation keyframes**: The keyframes generation should work the same since it's still left-to-right, but confirm totalWidth calculation: `14 * 32 = 448px`
+- **Test teleport timing**: Ensure buddy teleports at the correct visual frame (around frame 6 of 14) for smooth effect
+- **Update documentation**: Modify sprite details in this TODO.md and any code comments to reflect the new 14-frame single-row sprite
+- **Commit changes**: "Update poof animation to use Poof_Animation_2.png with 14 frames and adjusted teleport timing"
