@@ -77,3 +77,8 @@ Fix sprite flipping and facing direction bugs, implement sprite-cycling keyboard
 - Add documentation for keyboard shortcuts in code comments.
 - Verify no console errors or warnings.
 - Commit with descriptive message: "Step 3: Fix sprite flipping, add sprite cycling and zoom controls" 
+
+
+## Phase 7: Correcting Visually Inspected Errors
+- Facing wrong direction when moving: Dog, Cat, Bunny (jumping.png), Bird
+- When the user clicks on the character, the character currently goes up to the top left of the screen, but then teleports back down to whereever it was previously and keeps exploring. The functionality should be such that when the user clicks on the sprite, the sprite will go up to the corner, but remain there and not continue to explore. then when the user clicks on the sprite again, then it will continue to explore.
