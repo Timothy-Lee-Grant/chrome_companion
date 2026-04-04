@@ -288,28 +288,6 @@ function cycleSpriteForward() {
   console.log('Sprite cycled to:', CURRENT_SPRITE);
 }
 
-function updateBuddySprite_gemini() {
-  const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
-  const totalWidth = spriteConfig.frameCount * spriteConfig.frameWidth;
-  const animationName = `buddy-walk-${CURRENT_SPRITE}`;
-
-  // We write the "Law" into the Shadow DOM Manual instead of the tag
-  shadowStyleSheet.textContent = `
-    #screen-buddy {
-      width: ${spriteConfig.frameWidth}px !important;
-      height: ${spriteConfig.frameHeight}px !important;
-      background-image: url('${spriteConfig.url}') !important;
-      background-size: ${totalWidth}px ${spriteConfig.frameHeight}px !important;
-      animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
-    }
-
-    @keyframes ${animationName} {
-      from { background-position: 0px 0px; }
-      to { background-position: -${totalWidth}px 0px; }
-    }
-  `;
-}
-
 function updateBuddySprite() {
   // Update sprite configuration dynamically
   const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
@@ -436,22 +414,7 @@ function initializeBuddy() {
     `;
   }
   
-  // Set all styles using cssText
-  /*
-  buddy.style.cssText = `
-    position: fixed !important;
-    width: ${spriteConfig.frameWidth}px !important;
-    height: ${spriteConfig.frameHeight}px !important;
-    z-index: 999999 !important;
-    display: block !important;
-    pointer-events: auto !important;
-    background-image: url('${spriteConfig.url}') !important;
-    background-repeat: no-repeat !important;
-    background-position: 0 0 !important;
-    background-size: ${totalWidth}px ${spriteConfig.frameHeight}px !important;
-    animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
-  `;
-  */
+
   // Set ONLY the structural "Window" styles here
   buddy.style.cssText = `
     position: fixed !important;
