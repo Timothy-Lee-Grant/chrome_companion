@@ -1,84 +1,98 @@
-# Implementation Roadmap for Step 3: Getting More Sprites & Controls
+# Implementation Roadmap for Step 4: Implement Poof Animation
 
 ## Overview
-Fix sprite flipping and facing direction bugs, implement sprite-cycling keyboard shortcut, and add zoom/scale controls for the buddy.
+Implement a "poof" cloud animation that plays when the user clicks the buddy while it's exploring. The poof cloud builds over the buddy, teleports the buddy to the corner at frame 6, then continues the animation as the cloud dissipates. This only triggers when clicking to go to corner (not when resuming from corner).
 
-**Available Sprites:**
-- `pig-idle.png` (64x64, 4 frames)
-- `dog-bark.png` (64x64, 11 frames)
-- `cat-jump.png` (64x32, 6.5 frames)
-- `Jumping.png` (this is a bunny, but the name is not descriptive)
-- `BirdFly.png`
-- `FrogIdle.png`
-
----
-
-## Phase 1: Fix Sprite Flipping & Facing Direction
-- **Issue 1 - Flip Teleportation**: Currently flipping along right/left vertical axis. Fix to flip over middle vertical axis (transform-origin or transform direction).
-- **Issue 2 - Facing Direction**: Direction is inverted. Need to reverse facing logic:
-  - `dx < 0` should set `facing = 1` (face right when moving left appears wrong)
-  - `dx > 0` should set `facing = -1` (face left when moving right appears wrong)
-  - Or check if the sprite itself is directionally asymmetric and adjust accordingly.
-- Update `updateBuddyPosition()` to invert facing calculation.
-- Update `updateBuddyStyle()` transform logic if needed.
-- Test on multiple websites to verify smooth transitions without teleport effect.
+**Poof Sprite Details:**
+- File: `Poof_Animation.png` (128x128px, 16 frames in 4x4 grid)
+- Frame layout: 4 columns (x: 0-3), 4 rows (y: 0-3)
+- Frame sequence: (0,0), (1,0), (2,0), (3,0), (0,1), (1,1), (2,1), (3,1), (0,2), (1,2), (2,2), (3,2), (0,3), (1,3), (2,3), (3,3)
+- Frame size: 32x32px each (128/4 = 32)
+- Total frames: 16
+- Animation timing: ~0.8-1.0 seconds total (adjust based on feel)
 
 ---
 
-## Phase 2: Implement Sprite Cycling with Keyboard Shortcut
-- **Keyboard Shortcut**: `Alt+S` (arbitrary choice - cycles through next sprite)
-- Add keyboard event listener in `content.js`.
-- Create sprite index tracker: `currentSpriteIndex` in `buddyState`.
-- Build sprite name array: `['pig-idle', 'dog-bark', 'cat-jump', etc]`.
-- On `Alt+S`:
-  - Increment index (mod sprite count).
-  - Update `CURRENT_SPRITE`.
-  - Update sprite config in buddy element (background-image URL, frameWidth, frameHeight, frameCount, animationDuration).
-  - Log sprite change event.
-  - Restart animation.
-- Ensure smooth transition when switching sprites mid-movement.
+## Phase 1: Add Poof Sprite Configuration
+- **Add to SPRITE_CONFIG**: Create entry for 'poof-cloud' with:
+  - `url`: `chrome.runtime.getURL('assets/sprites/Poof_Animation.png')`
+  - `frameWidth`: 32
+  - `frameHeight`: 32
+  - `frameCount`: 16
+  - `animationDuration`: 0.8 (or adjust for smooth playback)
+  - `defaultState`: 'poof'
+- **Update SPRITE_LIST**: Do NOT add 'poof-cloud' to cycling list (it's not a buddy sprite)
+- **Verify sprite loading**: Ensure manifest.json includes the poof sprite in web_accessible_resources
 
 ---
 
-## Phase 3: Add Zoom/Scale Controls
-- **Keyboard Shortcuts**:
-  - `Alt+[` to shrink sprite (decrease scale by 0.2x, minimum 0.5x)
-  - `Alt+]` to grow sprite (increase scale by 0.2x, maximum 2.0x)
-- Add keyboard event listener for these keys.
-- Track current scale in `buddyState.scale` (default 1.0).
-- Update `updateBuddyStyle()` to include `scale()` in transform:
-  - `transform = translate(...) scaleX(...) scale(${buddyState.scale})`
-- Adjust buddy width/height dynamically based on scale (64px * scale).
-- Log scale change events.
-- Test that movement bounds remain correct when scaled.
+## Phase 2: Create Poof Overlay Element
+- **Create poofElement**: Similar to buddy element, but for the cloud animation
+- **Positioning**: Positioned absolutely over the buddy's current location
+- **Styling**: Same shadow DOM approach as buddy
+- **Visibility**: Hidden by default, shown only during poof animation
+- **Z-index**: Higher than buddy (z-index: 999998) so it covers the buddy
+- **Size**: 32x32px (matches frame size)
+- **Animation**: Uses steps(16) for frame-by-frame playback
 
 ---
 
-## Phase 4: Update SPRITE_CONFIG
-- Verify all sprite configurations are correct (frameCount, animationDuration).
-- Ensure background-size is set correctly for all sprites (currently `auto 64px`).
-- Test animation timing for each sprite on the screen.
+## Phase 3: Implement Poof Animation Logic
+- **Poof state management**: Add `buddyState.isPoofing = false` to track poof state
+- **Animation keyframes**: Generate dynamic keyframes for poof sprite (similar to buddy walk)
+- **Timing control**: Use setTimeout or animation events to trigger teleport at frame 6
+- **Frame calculation**: Frame 6 corresponds to ~37.5% through 16-frame animation (6/16 = 0.375)
+- **Teleport timing**: At 0.375 * animationDuration seconds, move buddy to corner
+- **Animation completion**: Hide poof element and reset states when animation ends
 
 ---
 
-## Phase 5: Testing & Validation
-- Load extension in Chrome on various websites.
-- Test facing direction changes smoothly without teleport effect.
-- Test sprite cycling with `Alt+S` - verify sprite changes instantly.
-- Test zoom with `Alt+[` and `Alt+]` - verify scale increases/decreases correctly.
-- Verify movement bounds still work when scaled (buddy doesn't go off-screen).
-- Check console logs for sprite changes and scale updates.
-- Ensure animations loop correctly on all sprites.
+## Phase 4: Modify onClick for Poof Trigger
+- **Condition check**: Only trigger poof if `!buddyState.inCorner` (exploring mode)
+- **Poof sequence**:
+  1. Set `buddyState.isPoofing = true`
+  2. Show poof element at buddy's current position
+  3. Start poof animation
+  4. Schedule teleport to corner at frame 6 timing
+  5. Set `buddyState.inCorner = true` and stop movement
+  6. On animation end: hide poof, reset states
+- **Skip wave animation**: When poofing, don't play the wave/surprised animation
+- **Position sync**: Ensure poof element follows buddy position during build-up phase
 
 ---
 
-## Phase 6: Final Polish & Commit
-- Ensure all code is clean and well-commented.
-- Add documentation for keyboard shortcuts in code comments.
-- Verify no console errors or warnings.
-- Commit with descriptive message: "Step 3: Fix sprite flipping, add sprite cycling and zoom controls" 
+## Phase 5: Handle Poof Positioning and Movement
+- **Initial position**: Poof starts at buddy's current (x,y) position
+- **During build-up**: If buddy moves slightly before teleport, poof should stay centered
+- **Teleport sync**: When buddy teleports to corner, poof continues at original position
+- **Z-index management**: Ensure poof covers buddy during animation
+- **Cleanup**: Remove poof element from DOM when not in use, recreate as needed
 
+---
 
-## Phase 7: Correcting Visually Inspected Errors
-- Facing wrong direction when moving: Dog, Cat, Bunny (jumping.png), Bird
-- When the user clicks on the character, the character currently goes up to the top left of the screen, but then teleports back down to whereever it was previously and keeps exploring. The functionality should be such that when the user clicks on the sprite, the sprite will go up to the corner, but remain there and not continue to explore. then when the user clicks on the sprite again, then it will continue to explore.
+## Phase 6: Integrate with Existing Systems
+- **Shadow DOM**: Add poof element to same shadow root as buddy
+- **Animation conflicts**: Ensure poof animation doesn't interfere with buddy walk animation
+- **State consistency**: Update all relevant states (moving, targetX/Y, nextDecisionTime)
+- **Event handling**: Prevent multiple clicks during poof animation
+- **Console logging**: Add debug logs for poof start, teleport, and completion
+
+---
+
+## Phase 7: Testing and Refinement
+- **Basic functionality**: Click buddy while exploring → poof builds → teleport at frame 6 → poof dissipates
+- **Corner click**: Click buddy in corner → no poof, just resume exploring
+- **Animation timing**: Verify teleport happens at correct frame (visual inspection)
+- **Positioning**: Ensure poof covers buddy properly, teleport works
+- **Edge cases**: Test rapid clicking, window resize during poof, sprite changes during poof
+- **Performance**: Ensure smooth 60fps animation, no jank
+- **Cross-browser**: Test in Chrome (primary), check Firefox/Safari compatibility
+
+---
+
+## Phase 8: Polish and Final Commit
+- **Code cleanup**: Remove debug logs, add comments for poof logic
+- **Error handling**: Add try/catch for animation failures
+- **Accessibility**: Consider screen reader announcements (optional)
+- **Documentation**: Update code comments with poof behavior
+- **Commit message**: "Step 4: Implement poof cloud animation on exploration click with teleport timing"
