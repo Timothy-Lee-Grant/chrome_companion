@@ -244,7 +244,7 @@ function startPoofAnimation() {
   // Position poof centered on buddy (account for different buddy sizes)
   const currentSpriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
   const offsetX = (currentSpriteConfig.frameWidth - 32) / 2;
-  const offsetY = (currentSpriteConfig.frameHeight - 32) / 2;
+  const offsetY = currentSpriteConfig.frameHeight / 2; // Adjust vertical centering
   poofElement.style.left = `${buddyState.x + offsetX}px`;
   poofElement.style.top = `${buddyState.y + offsetY}px`;
   poofElement.style.backgroundImage = `url('${poofConfig.url}')`;
@@ -252,9 +252,22 @@ function startPoofAnimation() {
   poofElement.style.animation = `${animationName} ${poofConfig.animationDuration}s steps(${poofConfig.frameCount})`;
   poofElement.style.display = 'block';
   
+  // Function to update poof position to follow the character
+  const updatePoofPosition = () => {
+    const currentConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+    const offX = (currentConfig.frameWidth - 32) / 2;
+    const offY = currentConfig.frameHeight / 2;
+    poofElement.style.left = `${buddyState.x + offX}px`;
+    poofElement.style.top = `${buddyState.y + offY}px`;
+  };
+  
+  // Update poof position every 100ms to follow character movement
+  const positionUpdateInterval = setInterval(updatePoofPosition, 100);
+  
   // Schedule teleport at frame 6 (~42.9% through 14-frame animation)
   const teleportDelay = 0.4286 * poofConfig.animationDuration * 1000; // ms
   setTimeout(() => {
+    clearInterval(positionUpdateInterval); // Stop position updates
     console.log('Teleporting buddy to corner at frame 6');
     buddyState.x = 0;
     buddyState.y = 0;

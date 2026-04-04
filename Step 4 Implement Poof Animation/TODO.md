@@ -139,3 +139,19 @@ Change the animation, to now implement this png as the poof instead of the previ
 - **Test centering**: Verify poof appears centered on buddy for all sprite types (pig 64x64 → offset 16px, smaller sprites 32x32 → offset 0px)
 - **Update documentation**: Add note in code comments about centering logic
 - **Commit changes**: "Fix poof cloud positioning to center on buddy character regardless of sprite size"
+
+## Phase 13: 
+- Poof animation should follow character as charicter is moving along the screen. 
+- The poof seems to be correctly centered horizontally to the character, but in the vertical axis, the poof's center is at the top of the character's frame. The vertical centers should also be aligned.
+
+---
+
+## Phase 14: Make Poof Follow Character and Adjust Vertical Centering
+- **Add position tracking**: To make the poof follow the character during the animation, add a setInterval to update the poof position every 100ms until the teleport occurs
+- **Implement update function**: Create `updatePoofPosition()` that recalculates the offset based on current sprite and updates poof element position
+- **Clear interval on teleport**: Stop the position updates when the buddy teleports to the corner
+- **Adjust vertical centering**: Modify offsetY calculation to better align the poof center with the character center - try `offsetY = currentSpriteConfig.frameHeight / 2 - 16` (same as current) or adjust if needed
+- **Test following**: Verify poof stays centered on moving character during the ~0.34s before teleport
+- **Test vertical alignment**: Check that poof center aligns with character center vertically
+- **Update documentation**: Add comments about position tracking logic
+- **Commit changes**: "Make poof animation follow character movement and refine vertical centering" 
