@@ -127,3 +127,15 @@ Change the animation, to now implement this png as the poof instead of the previ
 
 ## Phase 11:
 - I am noticing that the location which the cloud appears is not correct. The poof animation cloud should align with my character. The center of the poof frame should always be at the center of my character frame.
+
+---
+
+## Phase 12: Fix Poof Cloud Positioning to Center on Buddy
+- **Analyze positioning issue**: Current code positions poof at buddy's top-left corner, but since buddy sizes vary (64x64 for pig, 32x32 for others) and poof is always 32x32, the poof needs to be offset to center on the buddy
+- **Calculate centering offset**: In `startPoofAnimation()`, get the current sprite config and compute:
+  - `offsetX = (currentSpriteConfig.frameWidth - 32) / 2`
+  - `offsetY = (currentSpriteConfig.frameHeight - 32) / 2`
+- **Update poof positioning**: Set `poofElement.style.left = \`${buddyState.x + offsetX}px\`` and `poofElement.style.top = \`${buddyState.y + offsetY}px\``
+- **Test centering**: Verify poof appears centered on buddy for all sprite types (pig 64x64 → offset 16px, smaller sprites 32x32 → offset 0px)
+- **Update documentation**: Add note in code comments about centering logic
+- **Commit changes**: "Fix poof cloud positioning to center on buddy character regardless of sprite size"

@@ -241,9 +241,12 @@ function startPoofAnimation() {
     poofStyleSheet.textContent = keyframes;
   }
   
-  // Position poof over buddy
-  poofElement.style.left = `${buddyState.x}px`;
-  poofElement.style.top = `${buddyState.y}px`;
+  // Position poof centered on buddy (account for different buddy sizes)
+  const currentSpriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+  const offsetX = (currentSpriteConfig.frameWidth - 32) / 2;
+  const offsetY = (currentSpriteConfig.frameHeight - 32) / 2;
+  poofElement.style.left = `${buddyState.x + offsetX}px`;
+  poofElement.style.top = `${buddyState.y + offsetY}px`;
   poofElement.style.backgroundImage = `url('${poofConfig.url}')`;
   poofElement.style.backgroundSize = `${totalWidth}px ${poofConfig.frameHeight}px`;
   poofElement.style.animation = `${animationName} ${poofConfig.animationDuration}s steps(${poofConfig.frameCount})`;
