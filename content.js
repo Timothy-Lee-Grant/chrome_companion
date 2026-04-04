@@ -291,10 +291,10 @@ function updateBuddySprite() {
   const keyframes = `
     @keyframes ${animationName} {
       from {
-        background-position: 0 0;
+        background-position-x: 0;
       }
       to {
-        background-position: -${totalWidth}px 0;
+        background-position-x: -${totalWidth}px;
       }
     }
   `;
@@ -359,10 +359,10 @@ function initializeBuddy() {
   const keyframes = `
     @keyframes ${animationName} {
       from {
-        background-position: 0 0;
+        background-position-x: 0;
       }
       to {
-        background-position: -${totalWidth}px 0;
+        background-position-x: -${totalWidth}px;
       }
     }
   `;
