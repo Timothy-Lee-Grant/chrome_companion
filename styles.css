@@ -1,12 +1,17 @@
 /* styles.css - Styles for the screen buddy */
 
-@keyframes buddy-walk {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: -256px 0;
-  }
+.buddy {
+  position: fixed !important;
+  width: 64px !important;
+  height: 64px !important;
+  z-index: 999999 !important;
+  display: block !important;
+  pointer-events: auto !important;
+  background-repeat: no-repeat !important;
+  background-position: 0 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 }
 
 @keyframes buddy-wave {
@@ -28,15 +33,6 @@
 @keyframes buddy-fade-out {
   0% { opacity: 1; }
   100% { opacity: 0.2; }
-}
-
-.buddy {
-  position: fixed !important;
-  width: 64px !important;
-  height: 64px !important;
-  z-index: 999999 !important;
-  display: block !important;
-  pointer-events: auto !important;
 }
 
 .buddy-wave {

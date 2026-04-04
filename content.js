@@ -291,10 +291,10 @@ function updateBuddySprite() {
   const keyframes = `
     @keyframes ${animationName} {
       from {
-        background-position-x: 0;
+        background-position: 0 0;
       }
       to {
-        background-position-x: -${totalWidth}px;
+        background-position: -${totalWidth}px 0;
       }
     }
   `;
@@ -306,6 +306,7 @@ function updateBuddySprite() {
 
   // Use .setProperty() for targeted updates to avoid overwriting other inline styles
   buddy.style.setProperty('background-image', `url('${spriteConfig.url}')`, 'important');
+  buddy.style.setProperty('background-size', `${totalWidth}px ${spriteConfig.frameHeight}px`, 'important');
   buddy.style.setProperty('animation', `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`, 'important');
   buddy.style.setProperty('width', `${spriteConfig.frameWidth}px`, 'important');
   buddy.style.setProperty('height', `${spriteConfig.frameHeight}px`, 'important');
@@ -350,19 +351,16 @@ function initializeBuddy() {
     console.warn('Sprite URL is not pig-idle path:', spriteConfig.url);
   }
 
-  // Aggressive visibility reset: clear all inherited styles
-  // all: initial !important; (removed this line to see if this was the reason for character not moving)
-  
   // Generate keyframes FIRST before setting styles
   const totalWidth = spriteConfig.frameCount * spriteConfig.frameWidth;
   const animationName = `buddy-walk-${CURRENT_SPRITE}`;
   const keyframes = `
     @keyframes ${animationName} {
       from {
-        background-position-x: 0;
+        background-position: 0 0;
       }
       to {
-        background-position-x: -${totalWidth}px;
+        background-position: -${totalWidth}px 0;
       }
     }
   `;
@@ -374,12 +372,11 @@ function initializeBuddy() {
   }
   shadowStyleSheet.textContent = keyframes;
   
-  // Bundle animation into cssText with !important so it has equal weight as background-position
+  // Set all styles using cssText
   buddy.style.cssText = `
     position: fixed !important;
     width: ${spriteConfig.frameWidth}px !important;
     height: ${spriteConfig.frameHeight}px !important;
-    transform-origin: top left !important;
     z-index: 999999 !important;
     display: block !important;
     pointer-events: auto !important;
@@ -389,7 +386,6 @@ function initializeBuddy() {
     background-size: ${totalWidth}px ${spriteConfig.frameHeight}px !important;
     animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
   `;
-
 
   if (!document.body && !document.documentElement) {
     console.warn('document.body and documentElement not ready, waiting DOMContentLoaded');
@@ -420,6 +416,8 @@ function initializeBuddy() {
   
   shadowRoot.appendChild(buddy);
   console.log('Buddy appended to #buddy-container shadow DOM');
+  console.log('Keyframes registered:', animationName);
+  console.log('Animation:', `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`);
 
   console.log('Buddy Initialized at:', buddyState.x, buddyState.y);
 
