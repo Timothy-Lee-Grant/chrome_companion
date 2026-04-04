@@ -108,8 +108,7 @@ function chooseNextTarget() {
   buddyState.moving = true;
   buddyState.nextDecisionTime = performance.now() + 2500 + Math.random() * 2200;
   buddyState.animationState = 'idle';
-  // Clear any active animations
-  buddy.style.animation = '';
+  buddy.style.animation = getWalkAnimation();
   const dx = targetX - buddyState.x;
   const dy = targetY - buddyState.y;
   const dist = Math.hypot(dx, dy);
@@ -193,6 +192,15 @@ function updateBuddyStyle() {
   buddy.style.transform = `translate(${x}px, ${y}px) scaleX(${buddyState.facing}) scale(${buddyState.scale})`;
 }
 
+function getWalkAnimation() {
+  const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+  if (!spriteConfig) {
+    return '';
+  }
+  const animationName = `buddy-walk-${CURRENT_SPRITE}`;
+  return `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`;
+}
+
 function tick(now) {
   if (!buddyState.isVisible || buddyState.isHidden) {
     buddyState.lastStepTime = now;
@@ -242,13 +250,13 @@ function onClick(e) {
   const animations = ['buddy-wave', 'buddy-surprised'];
   const chosen = animations[Math.floor(Math.random() * animations.length)];
   
-  // Apply animation directly via inline style
-  buddy.style.animation = `${chosen} 0.6s ease-in-out`;
+  // Apply the click animation while preserving the walking sprite animation.
+  buddy.style.animation = `${getWalkAnimation()}, ${chosen} 0.6s ease-in-out`;
   
   buddyState.animationState = chosen;
   
   setTimeout(() => {
-    buddy.style.animation = '';
+    buddy.style.animation = getWalkAnimation();
     buddyState.animationState = 'idle';
   }, 600);
 }
@@ -258,14 +266,14 @@ function onContextMenu(e) {
   e.stopPropagation();
   console.log('Right-click menu triggered');
   
-  // Hide the buddy with fade animation
-  buddy.style.animation = 'buddy-fade-out 0.3s ease-in forwards';
+  // Hide the buddy with fade animation while preserving the walking sprite animation.
+  buddy.style.animation = `buddy-fade-out 0.3s ease-in forwards, ${getWalkAnimation()}`;
   buddy.style.pointerEvents = 'none';
   buddyState.isHidden = true;
   
   // Show it again after 5 seconds
   setTimeout(() => {
-    buddy.style.animation = '';
+    buddy.style.animation = getWalkAnimation();
     buddy.style.pointerEvents = 'auto';
     buddyState.isHidden = false;
     console.log('Buddy reappeared');
@@ -332,7 +340,8 @@ function updateBuddySprite() {
   // Use .setProperty() for targeted updates to avoid overwriting other inline styles
   buddy.style.setProperty('background-image', `url('${spriteConfig.url}')`, 'important');
   buddy.style.setProperty('background-size', `${totalWidth}px ${spriteConfig.frameHeight}px`, 'important');
-  buddy.style.setProperty('animation', `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`, 'important');
+  buddy.style.setProperty('background-position', '0 0');
+  buddy.style.setProperty('animation', getWalkAnimation(), 'important');
   buddy.style.setProperty('width', `${spriteConfig.frameWidth}px`, 'important');
   buddy.style.setProperty('height', `${spriteConfig.frameHeight}px`, 'important');
   
@@ -340,21 +349,23 @@ function updateBuddySprite() {
 }
 
 function onKeyDown(e) {
+  const key = e.key.toLowerCase();
+
   // Alt+S: Cycle sprite
-  if (e.altKey && e.key === 's') {
+  if (e.altKey && key === 's') {
     e.preventDefault();
     cycleSpriteForward();
   }
   
   // Alt+[: Shrink sprite
-  if (e.altKey && e.key === '[') {
+  if (e.altKey && key === '[') {
     e.preventDefault();
     buddyState.scale = Math.max(0.5, buddyState.scale - 0.2);
     console.log('Sprite scaled down to:', buddyState.scale.toFixed(1));
   }
   
   // Alt+]: Grow sprite
-  if (e.altKey && e.key === ']') {
+  if (e.altKey && key === ']') {
     e.preventDefault();
     buddyState.scale = Math.min(2.0, buddyState.scale + 0.2);
     console.log('Sprite scaled up to:', buddyState.scale.toFixed(1));
@@ -488,13 +499,16 @@ function initializeBuddy() {
   console.log('Keyframes registered:', animationName);
   console.log('Animation:', `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`);
 
+  // Apply the current sprite immediately so the buddy is visible on startup.
+  updateBuddySprite();
+
   console.log('Buddy Initialized at:', buddyState.x, buddyState.y);
 
   buddy.addEventListener('click', onClick);
   buddy.addEventListener('contextmenu', onContextMenu);
   window.addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', onVisibilityChange);
-  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keydown', onKeyDown, true);
 
   buddyState.nextDecisionTime = performance.now();
   updateBuddyStyle();
