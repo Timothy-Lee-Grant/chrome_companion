@@ -497,7 +497,7 @@ function initializeBuddy() {
     position: fixed !important;
     width: 32px !important;
     height: 32px !important;
-    z-index: 999998 !important;
+    z-index: 1000000 !important;
     display: none !important;
     pointer-events: none !important;
     background-repeat: no-repeat !important;
