@@ -56,6 +56,15 @@ const SPRITE_CONFIG = {
     defaultState: 'idle',
     invertFacing: false,
   },
+  'poof-cloud': {
+    url: chrome.runtime.getURL('assets/sprites/Poof_Animation.png'),
+    frameWidth: 32,
+    frameHeight: 32,
+    frameCount: 16,
+    animationDuration: 0.8,
+    defaultState: 'poof',
+    invertFacing: false, // Not applicable for cloud
+  },
 };
 
 // Sprite list for cycling (Alt+S)
@@ -66,9 +75,14 @@ let CURRENT_SPRITE = SPRITE_LIST[currentSpriteIndex];
 const buddy = document.createElement('div');
 buddy.id = 'screen-buddy';
 
+// Poof cloud element for teleport animation
+const poofElement = document.createElement('div');
+poofElement.id = 'poof-cloud';
+
 // Reference to shadow root's style elements (set later in initializeBuddy)
 let shadowStyleSheet = null;
 let shadowStaticStyleSheet = null;
+let poofStyleSheet = null; // For poof keyframes
 
 // Start position in the middle of the viewport (or fallback 100x100)
 let buddyState = {
@@ -86,6 +100,7 @@ let buddyState = {
   facing: 1,
   scale: 1.0,
   inCorner: false,
+  isPoofing: false,
 };
 
 function clamp(value, min, max) {
@@ -201,13 +216,60 @@ function updateBuddyStyle() {
   buddy.style.transform = `translate(${x}px, ${y}px) scaleX(${buddyState.facing}) scale(${buddyState.scale})`;
 }
 
-function getWalkAnimation() {
-  const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
-  if (!spriteConfig) {
-    return '';
+function startPoofAnimation() {
+  if (buddyState.isPoofing) return; // Prevent multiple poofs
+  
+  buddyState.isPoofing = true;
+  console.log('Starting poof animation');
+  
+  const poofConfig = SPRITE_CONFIG['poof-cloud'];
+  const totalWidth = poofConfig.frameCount * poofConfig.frameWidth;
+  const animationName = 'poof-cloud-animation';
+  const keyframes = `
+    @keyframes ${animationName} {
+      from {
+        background-position: 0 0;
+      }
+      to {
+        background-position: -${totalWidth}px 0;
+      }
+    }
+  `;
+  
+  // Update poof stylesheet
+  if (poofStyleSheet) {
+    poofStyleSheet.textContent = keyframes;
   }
-  const animationName = `buddy-walk-${CURRENT_SPRITE}`;
-  return `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`;
+  
+  // Position poof over buddy
+  poofElement.style.left = `${buddyState.x}px`;
+  poofElement.style.top = `${buddyState.y}px`;
+  poofElement.style.backgroundImage = `url('${poofConfig.url}')`;
+  poofElement.style.backgroundSize = `${totalWidth}px ${poofConfig.frameHeight}px`;
+  poofElement.style.animation = `${animationName} ${poofConfig.animationDuration}s steps(${poofConfig.frameCount})`;
+  poofElement.style.display = 'block';
+  
+  // Schedule teleport at frame 6 (37.5% through animation)
+  const teleportDelay = 0.375 * poofConfig.animationDuration * 1000; // ms
+  setTimeout(() => {
+    console.log('Teleporting buddy to corner at frame 6');
+    buddyState.x = 0;
+    buddyState.y = 0;
+    buddyState.moving = false;
+    buddyState.targetX = null;
+    buddyState.targetY = null;
+    buddyState.inCorner = true;
+    buddyState.nextDecisionTime = performance.now() + 999999; // Prevent auto movement
+    updateBuddyStyle();
+  }, teleportDelay);
+  
+  // Hide poof when animation completes
+  setTimeout(() => {
+    console.log('Poof animation completed');
+    poofElement.style.display = 'none';
+    poofElement.style.animation = '';
+    buddyState.isPoofing = false;
+  }, poofConfig.animationDuration * 1000);
 }
 
 function tick(now) {
@@ -256,24 +318,17 @@ function onClick(e) {
   console.log('Buddy clicked at', buddyState.x, buddyState.y);
   
   if (!buddyState.inCorner) {
-    // Move to top-left corner and stop exploring
-    buddyState.x = 0;
-    buddyState.y = 0;
-    buddyState.moving = false;
-    buddyState.targetX = null;
-    buddyState.targetY = null;
-    buddyState.inCorner = true;
-    buddyState.nextDecisionTime = performance.now() + 999999; // Prevent auto movement
-    updateBuddyStyle();
-    console.log('Buddy moved to corner');
+    // Start poof animation and teleport to corner
+    startPoofAnimation();
+    return; // Skip wave animation during poof
   } else {
-    // Resume exploring
+    // Resume exploring from corner
     buddyState.inCorner = false;
     buddyState.nextDecisionTime = performance.now(); // Allow immediate movement
     console.log('Buddy resumed exploring');
   }
   
-  // Randomly choose wave or surprised animation
+  // Play wave animation (only when not poofing)
   const animations = ['buddy-wave', 'buddy-surprised'];
   const chosen = animations[Math.floor(Math.random() * animations.length)];
   
@@ -406,12 +461,23 @@ function initializeBuddy() {
     }
   `;
   
-  // Create keyframes stylesheet for sprite animation
-  if (!shadowStyleSheet) {
-    shadowStyleSheet = document.createElement('style');
-    shadowStyleSheet.id = 'buddy-animations';
+  // Create keyframes stylesheet for poof animation
+  if (!poofStyleSheet) {
+    poofStyleSheet = document.createElement('style');
+    poofStyleSheet.id = 'poof-animations';
   }
-  shadowStyleSheet.textContent = keyframes;
+  
+  // Set poof element styles (hidden by default)
+  poofElement.style.cssText = `
+    position: fixed !important;
+    width: 32px !important;
+    height: 32px !important;
+    z-index: 999998 !important;
+    display: none !important;
+    pointer-events: none !important;
+    background-repeat: no-repeat !important;
+    image-rendering: pixelated !important;
+  `;
   
   // Create static keyframes stylesheet (only once)
   if (!shadowStaticStyleSheet) {
@@ -484,8 +550,13 @@ function initializeBuddy() {
     shadowRoot.appendChild(shadowStyleSheet);
   }
   
+  if (!poofStyleSheet.parentNode || poofStyleSheet.parentNode !== shadowRoot) {
+    shadowRoot.appendChild(poofStyleSheet);
+  }
+  
   shadowRoot.appendChild(buddy);
-  console.log('Buddy appended to #buddy-container shadow DOM');
+  shadowRoot.appendChild(poofElement);
+  console.log('Buddy and poof elements appended to #buddy-container shadow DOM');
   console.log('Keyframes registered:', animationName);
   console.log('Animation:', `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`);
 
