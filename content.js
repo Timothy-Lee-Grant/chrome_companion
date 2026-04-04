@@ -59,10 +59,10 @@ let CURRENT_SPRITE = SPRITE_LIST[currentSpriteIndex];
 
 const buddy = document.createElement('div');
 buddy.id = 'screen-buddy';
-buddy.className = 'buddy';
 
-// Reference to shadow root's style element (set later in initializeBuddy)
+// Reference to shadow root's style elements (set later in initializeBuddy)
 let shadowStyleSheet = null;
+let shadowStaticStyleSheet = null;
 
 // Start position in the middle of the viewport (or fallback 100x100)
 let buddyState = {
@@ -108,7 +108,8 @@ function chooseNextTarget() {
   buddyState.moving = true;
   buddyState.nextDecisionTime = performance.now() + 2500 + Math.random() * 2200;
   buddyState.animationState = 'idle';
-  buddy.classList.remove('buddy-wave', 'buddy-surprised');
+  // Clear any active animations
+  buddy.style.animation = '';
   const dx = targetX - buddyState.x;
   const dy = targetY - buddyState.y;
   const dist = Math.hypot(dx, dy);
@@ -241,13 +242,13 @@ function onClick(e) {
   const animations = ['buddy-wave', 'buddy-surprised'];
   const chosen = animations[Math.floor(Math.random() * animations.length)];
   
-  buddy.classList.remove('buddy-wave', 'buddy-surprised');
-  buddy.classList.add(chosen);
+  // Apply animation directly via inline style
+  buddy.style.animation = `${chosen} 0.6s ease-in-out`;
   
   buddyState.animationState = chosen;
   
   setTimeout(() => {
-    buddy.classList.remove(chosen);
+    buddy.style.animation = '';
     buddyState.animationState = 'idle';
   }, 600);
 }
@@ -257,13 +258,15 @@ function onContextMenu(e) {
   e.stopPropagation();
   console.log('Right-click menu triggered');
   
-  // Hide the buddy
-  buddy.classList.add('buddy-hidden');
+  // Hide the buddy with fade animation
+  buddy.style.animation = 'buddy-fade-out 0.3s ease-in forwards';
+  buddy.style.pointerEvents = 'none';
   buddyState.isHidden = true;
   
   // Show it again after 5 seconds
   setTimeout(() => {
-    buddy.classList.remove('buddy-hidden');
+    buddy.style.animation = '';
+    buddy.style.pointerEvents = 'auto';
     buddyState.isHidden = false;
     console.log('Buddy reappeared');
   }, 5000);
@@ -365,12 +368,40 @@ function initializeBuddy() {
     }
   `;
   
-  // Create keyframes stylesheet and add it to shadow DOM (not document head)
+  // Create keyframes stylesheet for sprite animation
   if (!shadowStyleSheet) {
     shadowStyleSheet = document.createElement('style');
     shadowStyleSheet.id = 'buddy-animations';
   }
   shadowStyleSheet.textContent = keyframes;
+  
+  // Create static keyframes stylesheet (only once)
+  if (!shadowStaticStyleSheet) {
+    shadowStaticStyleSheet = document.createElement('style');
+    shadowStaticStyleSheet.id = 'buddy-static-animations';
+    shadowStaticStyleSheet.textContent = `
+      @keyframes buddy-wave {
+        0% { transform: scale(1) rotate(0deg); }
+        25% { transform: scale(1.1) rotate(5deg); }
+        50% { transform: scale(1) rotate(0deg); }
+        75% { transform: scale(1.1) rotate(-5deg); }
+        100% { transform: scale(1) rotate(0deg); }
+      }
+
+      @keyframes buddy-surprised {
+        0% { transform: scale(1); }
+        25% { transform: scale(1.2); }
+        50% { transform: scale(1.15); }
+        75% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+      }
+
+      @keyframes buddy-fade-out {
+        0% { opacity: 1; }
+        100% { opacity: 0.2; }
+      }
+    `;
+  }
   
   // Set all styles using cssText
   buddy.style.cssText = `
@@ -409,7 +440,11 @@ function initializeBuddy() {
 
   const shadowRoot = container.shadowRoot || container.attachShadow({ mode: 'open' });
   
-  // Add the keyframes style element to the shadow DOM BEFORE appending buddy
+  // Add the keyframes style elements to the shadow DOM BEFORE appending buddy
+  if (!shadowStaticStyleSheet.parentNode || shadowStaticStyleSheet.parentNode !== shadowRoot) {
+    shadowRoot.appendChild(shadowStaticStyleSheet);
+  }
+  
   if (!shadowStyleSheet.parentNode || shadowStyleSheet.parentNode !== shadowRoot) {
     shadowRoot.appendChild(shadowStyleSheet);
   }
