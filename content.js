@@ -20,32 +20,32 @@ const SPRITE_CONFIG = {
   },
   'cat-jump': {
     url: chrome.runtime.getURL('assets/sprites/cat-jump.png'),
-    frameWidth: 64,
+    frameWidth: 32,
     frameHeight: 32,
-    frameCount: 13, //previously AI agent assigned this to be 6.5 (which is wrong for TWO REASONS!!! First there are 13 frames on visual inspection, secondly we can't even have a half frame logically!!) (This indicates that the AI agent was just looking at the length of the image and guessing how many frames should be there (I thought it was getting the information from metadata within the image itself!))
+    frameCount: 13,
     animationDuration: 0.6,
     defaultState: 'jump',
   },
   'jumping': {
     url: chrome.runtime.getURL('assets/sprites/Jumping.png'),
-    frameWidth: 64,
-    frameHeight: 64,
-    frameCount: 11, //previously AI agent assigned this to be 4
+    frameWidth: 32,
+    frameHeight: 32,
+    frameCount: 11,
     animationDuration: 0.6,
     defaultState: 'jump',
   },
   'bird-fly': {
     url: chrome.runtime.getURL('assets/sprites/BirdFly.png'),
-    frameWidth: 64,
-    frameHeight: 64,
-    frameCount: 8, //previously AI agent assigned this to be 4,
+    frameWidth: 16,
+    frameHeight: 16,
+    frameCount: 8,
     animationDuration: 0.5,
     defaultState: 'fly',
   },
   'frog-idle': {
     url: chrome.runtime.getURL('assets/sprites/FrogIdle.png'),
-    frameWidth: 64,
-    frameHeight: 64,
+    frameWidth: 32,
+    frameHeight: 32,
     frameCount: 4,
     animationDuration: 0.8,
     defaultState: 'idle',
@@ -298,13 +298,13 @@ function updateBuddySprite() {
     shadowStyleSheet.textContent = keyframes;
   }
 
-  // Update buddy element with new sprite and animation config
-  buddy.style.backgroundImage = `url('${spriteConfig.url}')`;
-  buddy.style.animation = `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important`;
+  // Use .setProperty() for targeted updates to avoid overwriting other inline styles
+  buddy.style.setProperty('background-image', `url('${spriteConfig.url}')`, 'important');
+  buddy.style.setProperty('animation', `${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite`, 'important');
+  buddy.style.setProperty('width', `${spriteConfig.frameWidth}px`, 'important');
+  buddy.style.setProperty('height', `${spriteConfig.frameHeight}px`, 'important');
   
-  // Update dimensions if needed (some sprites have different heights)
-  buddy.style.height = `${spriteConfig.frameHeight}px !important`;
-  console.log('Sprite animation updated for:', CURRENT_SPRITE, 'Total width:', totalWidth, 'Frame count:', spriteConfig.frameCount);
+  console.log('Sprite animation updated for:', CURRENT_SPRITE, 'Frame:', spriteConfig.frameWidth + 'x' + spriteConfig.frameHeight, 'Count:', spriteConfig.frameCount, 'Total width:', totalWidth);
 }
 
 function onKeyDown(e) {
@@ -369,11 +369,10 @@ function initializeBuddy() {
   shadowStyleSheet.textContent = keyframes;
   
   // Bundle animation into cssText with !important so it has equal weight as background-position
-  // background-size: auto 64px !important; attempting to move this out to see if I can get the animations to play correctly
   buddy.style.cssText = `
     position: fixed !important;
-    width: 64px !important;
-    height: 64px !important;
+    width: ${spriteConfig.frameWidth}px !important;
+    height: ${spriteConfig.frameHeight}px !important;
     transform-origin: top left !important;
     z-index: 999999 !important;
     display: block !important;
@@ -382,7 +381,7 @@ function initializeBuddy() {
     background-repeat: no-repeat !important;
     background-position: 0 0 !important;
     background-size: ${totalWidth}px ${spriteConfig.frameHeight}px !important;
-    animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite;
+    animation: ${animationName} ${spriteConfig.animationDuration}s steps(${spriteConfig.frameCount}) infinite !important;
   `;
 
 
