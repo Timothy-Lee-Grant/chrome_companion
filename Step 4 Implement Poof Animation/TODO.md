@@ -123,3 +123,7 @@ Change the animation, to now implement this png as the poof instead of the previ
 - **Test teleport timing**: Ensure buddy teleports at the correct visual frame (around frame 6 of 14) for smooth effect
 - **Update documentation**: Modify sprite details in this TODO.md and any code comments to reflect the new 14-frame single-row sprite
 - **Commit changes**: "Update poof animation to use Poof_Animation_2.png with 14 frames and adjusted teleport timing"
+
+
+## Phase 11:
+- I am noticing that the location which the cloud appears is not correct. The poof animation cloud should align with my character. The center of the poof frame should always be at the center of my character frame.
