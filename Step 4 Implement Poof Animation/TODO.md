@@ -96,3 +96,13 @@ Implement a "poof" cloud animation that plays when the user clicks the buddy whi
 - **Accessibility**: Consider screen reader announcements (optional)
 - **Documentation**: Update code comments with poof behavior
 - **Commit message**: "Step 4: Implement poof cloud animation on exploration click with teleport timing"
+
+
+## Phase 9: Change Poof_Animation to Poof_Animation_2:
+Poof png information:
+timothy@timothy-System-Product-Name:~/Desktop/Personal_Practice_Projects/chrome_companion/assets/sprites$ identify Poof_Animation_2.png 
+Poof_Animation_2.png PNG 448x32 448x32+0+0 8-bit sRGB 1332B 0.000u 0:00.000
+
+Animation is from left to right. Poof_Animation_2 has 14 frames in it.
+
+Change the animation, to now implement this png as the poof instead of the previous Poof_Animation.png (which was a 4x4 grid png). This updated Poof_Animation_2.png is a single row of 14 frames.
