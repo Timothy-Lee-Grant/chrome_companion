@@ -155,3 +155,10 @@ Change the animation, to now implement this png as the poof instead of the previ
 - **Test vertical alignment**: Check that poof center aligns with character center vertically
 - **Update documentation**: Add comments about position tracking logic
 - **Commit changes**: "Make poof animation follow character movement and refine vertical centering" 
+
+
+## Phase 15:
+- When my character is in the corner not exploring, I noticed when I click another link and the webpage refreshes, the character once again starts exploring. The functionality should be such that if the character is in the 'resting state' (meaning in the corner not moving), the character remains there until the user once again clicks them to start exploring again.
+- The poof animation is working, but does not seem to be covering the entire sprite. 
+- The problem of the poof animation not covering the entire sprite is even more pronounced when the user grows the sprite to be larger.
+- Implement feature that user can click and drag character to specific location on webpage. If the character is in exploration mode, they should continue to explore after they are dropped, if they are in resting mode, they should continue to be in resting mode. While they are being dragged, they should move with the user's mouse. When they are dropped, then they can start their exploration, or rest, in that new location.
