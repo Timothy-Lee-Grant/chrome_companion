@@ -212,3 +212,6 @@ Change the animation, to now implement this png as the poof instead of the previ
 - ✅ Poof fully covers character when scaled up (tested with Alt+])
 - ✅ Can drag character to any location and continue exploring/resting from there
 - ✅ Character state persists across navigations and page reloads
+
+## Phase 16:
+-The project is working wonderfully. There is only one problem which I am now observing. When the user does the drag and drop, this will be counted as both a drag even and a 'start / stop' for exploring. If the user does a click, it should be treated as a start stop event, but if the user does a drag and drop, the character should remain in the rest or explore state that they were before. If the character was in the rest state in the corner, then the user drags the character to the middle of the screen, then the character should remain resting, but now in the middle of the screen. If they drag the character again, then it should remain resting at the new location. If the user clicks on the character it should start exploring. Then when the user drags, it should start moving once the user drops it to the new location.
