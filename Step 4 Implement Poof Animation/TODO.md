@@ -213,5 +213,52 @@ Change the animation, to now implement this png as the poof instead of the previ
 - ✅ Can drag character to any location and continue exploring/resting from there
 - ✅ Character state persists across navigations and page reloads
 
-## Phase 16:
--The project is working wonderfully. There is only one problem which I am now observing. When the user does the drag and drop, this will be counted as both a drag even and a 'start / stop' for exploring. If the user does a click, it should be treated as a start stop event, but if the user does a drag and drop, the character should remain in the rest or explore state that they were before. If the character was in the rest state in the corner, then the user drags the character to the middle of the screen, then the character should remain resting, but now in the middle of the screen. If they drag the character again, then it should remain resting at the new location. If the user clicks on the character it should start exploring. Then when the user drags, it should start moving once the user drops it to the new location.
+## Phase 16: ✅ COMPLETED
+- The project is working wonderfully. There is only one problem which I am now observing. When the user does the drag and drop, this will be counted as both a drag event and a 'start / stop' for exploring. If the user does a click, it should be treated as a start stop event, but if the user does a drag and drop, the character should remain in the rest or explore state that they were before. If the character was in the rest state in the corner, then the user drags the character to the middle of the screen, then the character should remain resting, but now in the middle of the screen. If they drag the character again, then it should remain resting at the new location. If the user clicks on the character it should start exploring. Then when the user drags, it should start moving once the user drops it to the new location.
+
+### Implementation Notes:
+
+#### 1. Drag vs Click Detection
+- Added 5-pixel drag threshold to distinguish between true clicks and drag operations
+- Mouse movement under 5px is treated as a click, over 5px is treated as a drag
+- Drag operation only fully activates after exceeding the threshold
+- This prevents accidental state changes from minor pointer jitter
+
+#### 2. wasJustDragged Flag
+- Added `wasJustDragged` flag to buddyState to track if a drag operation just completed
+- Set to true when drag completes in `onMouseUp()`
+- Reset to false when checked in `onClick()` 
+- Prevents onClick from being processed after drag operation finishes
+
+#### 3. Improved onMouseDown and onMouseUp Logic
+- Tracks initial mouse position (`startX`, `startY`) at mousedown
+- Only sets `isDragging = true` after movement exceeds 5px threshold
+- `wasPreviouslyMoving` variable captures exploring state before drag begins
+- If character was exploring before drag, it resumes exploration from new location after drop
+- If character was resting before drag, it remains resting at new location after drop
+
+#### 4. State Preservation During Drag
+- **Resting character dragged**: Remains `inCorner = true` at new location
+- **Exploring character dragged**: Resumes with `moving = true` from new location and triggers new target selection
+- All state changes only persist if actual drag occurred (not just a click)
+- localStorage is updated with correct position and inCorner state after drag
+
+#### 5. Click Behavior Remains Unchanged
+- Pure clicks (no movement) still toggle explore/rest state:
+  - Click while resting (inCorner=true) → starts exploring
+  - Click while exploring (inCorner=false) → starts poof animation and goes to corner
+- Click detection via `wasJustDragged` flag prevents state toggle after drag
+
+#### 6. Bug Fixes
+- Removed the incorrect `isDragging` check from onClick
+- Now uses `wasJustDragged` flag which is only set when actual drag occurs
+- This eliminates the false positive where even tiny movements would prevent state changes
+
+### Testing Scenario Results:
+- ✅ Click buddy in corner → starts exploring
+- ✅ Drag buddy in corner to middle → remains resting (inCorner=true) at new location
+- ✅ Drag buddy again → still resting at latest position
+- ✅ Click buddy at new resting position → starts exploring from new position
+- ✅ Drag buddy while exploring → continues exploring after drop from new location
+- ✅ State persists across page reloads
+- ✅ Minor pointer movements (< 5px) don't trigger drag mode
