@@ -84,24 +84,41 @@ let shadowStyleSheet = null;
 let shadowStaticStyleSheet = null;
 let poofStyleSheet = null; // For poof keyframes
 
+// Load saved state from localStorage or initialize with defaults
+function loadBuddyState() {
+  const saved = localStorage.getItem('buddyState');
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Failed to parse saved buddyState:', e);
+    }
+  }
+  // Default state: start in corner (resting state)
+  return {
+    x: 0,
+    y: 0,
+    targetX: null,
+    targetY: null,
+    speedPxPerSec: 80,
+    moving: false,
+    lastStepTime: performance.now(),
+    nextDecisionTime: performance.now() + 999999, // Prevent immediate movement
+    isVisible: true,
+    isHidden: false,
+    animationState: 'idle',
+    facing: 1,
+    scale: 1.0,
+    inCorner: true, // Start in resting state
+    isPoofing: false,
+    isDragging: false,
+    dragOffsetX: 0,
+    dragOffsetY: 0,
+  };
+}
+
 // Start position in the middle of the viewport (or fallback 100x100)
-let buddyState = {
-  x: Math.max(100, window.innerWidth / 2),
-  y: Math.max(100, window.innerHeight / 2),
-  targetX: null,
-  targetY: null,
-  speedPxPerSec: 80,
-  moving: false,
-  lastStepTime: performance.now(),
-  nextDecisionTime: performance.now() + 1000,
-  isVisible: true,
-  isHidden: false,
-  animationState: 'idle',
-  facing: 1,
-  scale: 1.0,
-  inCorner: false,
-  isPoofing: false,
-};
+let buddyState = loadBuddyState();
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -242,9 +259,10 @@ function startPoofAnimation() {
   }
   
   // Position poof centered on buddy (account for different buddy sizes)
+  // Calculate offset to center the 32x32 poof frame on the buddy sprite
   const currentSpriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
-  const offsetX = (currentSpriteConfig.frameWidth - 32) / 2;
-  const offsetY = currentSpriteConfig.frameHeight / 2; // Adjust vertical centering
+  const offsetX = (currentSpriteConfig.frameWidth - 32) / 2; // Half of poof width (16px)
+  const offsetY = (currentSpriteConfig.frameHeight - 32) / 2; // Half of poof height (16px) for true vertical center
   poofElement.style.left = `${buddyState.x + offsetX}px`;
   poofElement.style.top = `${buddyState.y + offsetY}px`;
   poofElement.style.backgroundImage = `url('${poofConfig.url}')`;
@@ -255,8 +273,8 @@ function startPoofAnimation() {
   // Function to update poof position to follow the character
   const updatePoofPosition = () => {
     const currentConfig = SPRITE_CONFIG[CURRENT_SPRITE];
-    const offX = (currentConfig.frameWidth - 32) / 2;
-    const offY = currentConfig.frameHeight / 2;
+    const offX = (currentConfig.frameWidth - 32) / 2; // Half of poof width
+    const offY = (currentConfig.frameHeight - 32) / 2; // Half of poof height
     poofElement.style.left = `${buddyState.x + offX}px`;
     poofElement.style.top = `${buddyState.y + offY}px`;
   };
@@ -276,6 +294,7 @@ function startPoofAnimation() {
     buddyState.targetY = null;
     buddyState.inCorner = true;
     buddyState.nextDecisionTime = performance.now() + 999999; // Prevent auto movement
+    saveBuddyState(); // Save state to localStorage
     updateBuddyStyle();
   }, teleportDelay);
   
@@ -339,6 +358,8 @@ function onResize() {
 }
 
 function onClick(e) {
+  if (buddyState.isDragging) return; // Don't trigger click if dragging
+  
   e.stopPropagation();
   console.log('Buddy clicked at', buddyState.x, buddyState.y);
   
@@ -350,6 +371,7 @@ function onClick(e) {
     // Resume exploring from corner
     buddyState.inCorner = false;
     buddyState.nextDecisionTime = performance.now(); // Allow immediate movement
+    saveBuddyState(); // Save state to localStorage
     console.log('Buddy resumed exploring');
   }
   
@@ -366,6 +388,69 @@ function onClick(e) {
     buddy.style.animation = getWalkAnimation();
     buddyState.animationState = 'idle';
   }, 600);
+}
+
+function onMouseDown(e) {
+  if (e.button !== 0) return; // Only left mouse button
+  e.stopPropagation();
+  
+  const buddy = e.target;
+  const rect = buddy.getBoundingClientRect();
+  
+  // Calculate offset from click position to buddy's top-left
+  buddyState.dragOffsetX = e.clientX - rect.left;
+  buddyState.dragOffsetY = e.clientY - rect.top;
+  buddyState.isDragging = true;
+  
+  // Pause movement during drag
+  const wasPreviouslyMoving = buddyState.moving;
+  buddyState.moving = false;
+  
+  console.log('Started dragging buddy');
+  
+  function onMouseMove(moveEvent) {
+    // Calculate new position based on mouse position
+    const newX = moveEvent.clientX - buddyState.dragOffsetX;
+    const newY = moveEvent.clientY - buddyState.dragOffsetY;
+    
+    // Clamp to viewport bounds
+    const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+    buddyState.x = clamp(newX, 0, window.innerWidth - spriteConfig.frameWidth);
+    buddyState.y = clamp(newY, 0, window.innerHeight - spriteConfig.frameHeight);
+    
+    updateBuddyStyle();
+  }
+  
+  function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    
+    buddyState.isDragging = false;
+    
+    // Resume exploring if was previously exploring, or stay in rest if was resting
+    if (!buddyState.inCorner) {
+      buddyState.moving = true;
+      buddyState.nextDecisionTime = performance.now(); // Trigger new target immediately
+    }
+    
+    saveBuddyState(); // Save the new position
+    console.log('Finished dragging buddy, new position:', buddyState.x, buddyState.y);
+  }
+  
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+}
+
+function saveBuddyState() {
+  // Save only serializable properties
+  const stateToSave = {
+    x: buddyState.x,
+    y: buddyState.y,
+    scale: buddyState.scale,
+    inCorner: buddyState.inCorner,
+  };
+  localStorage.setItem('buddyState', JSON.stringify(stateToSave));
+  console.log('Buddy state saved to localStorage:', stateToSave);
 }
 
 function onContextMenu(e) {
@@ -547,6 +632,7 @@ function initializeBuddy() {
     pointer-events: auto !important;
     background-repeat: no-repeat !important;
     image-rendering: pixelated !important;
+    cursor: grab !important;
     /* We leave background-position and animation out of here! */
   `;
 
@@ -595,8 +681,10 @@ function initializeBuddy() {
   updateBuddySprite();
 
   console.log('Buddy Initialized at:', buddyState.x, buddyState.y);
+  console.log('Buddy state - inCorner:', buddyState.inCorner, ', isDragging:', buddyState.isDragging);
 
   buddy.addEventListener('click', onClick);
+  buddy.addEventListener('mousedown', onMouseDown);
   buddy.addEventListener('contextmenu', onContextMenu);
   window.addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', onVisibilityChange);
