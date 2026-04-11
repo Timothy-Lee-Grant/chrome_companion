@@ -114,6 +114,7 @@ function loadBuddyState() {
     isDragging: false,
     dragOffsetX: 0,
     dragOffsetY: 0,
+    wasJustDragged: false, // Flag to prevent click handler from running after drag
   };
 }
 
@@ -358,7 +359,11 @@ function onResize() {
 }
 
 function onClick(e) {
-  if (buddyState.isDragging) return; // Don't trigger click if dragging
+  // Skip click handling if this was triggered during drag (checked via flag)
+  if (buddyState.wasJustDragged) {
+    buddyState.wasJustDragged = false;
+    return; // Don't trigger explore/rest toggle
+  }
   
   e.stopPropagation();
   console.log('Buddy clicked at', buddyState.x, buddyState.y);
@@ -400,41 +405,65 @@ function onMouseDown(e) {
   // Calculate offset from click position to buddy's top-left
   buddyState.dragOffsetX = e.clientX - rect.left;
   buddyState.dragOffsetY = e.clientY - rect.top;
-  buddyState.isDragging = true;
+  
+  // Track the starting position for drag detection
+  const startX = e.clientX;
+  const startY = e.clientY;
+  let hasMoved = false;
+  const dragThreshold = 5; // pixels - minimum movement to count as drag
   
   // Pause movement during drag
   const wasPreviouslyMoving = buddyState.moving;
   buddyState.moving = false;
   
-  console.log('Started dragging buddy');
+  console.log('Mouse down on buddy');
   
   function onMouseMove(moveEvent) {
-    // Calculate new position based on mouse position
-    const newX = moveEvent.clientX - buddyState.dragOffsetX;
-    const newY = moveEvent.clientY - buddyState.dragOffsetY;
+    // Check if mouse has moved enough to count as a drag
+    const deltaX = Math.abs(moveEvent.clientX - startX);
+    const deltaY = Math.abs(moveEvent.clientY - startY);
     
-    // Clamp to viewport bounds
-    const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
-    buddyState.x = clamp(newX, 0, window.innerWidth - spriteConfig.frameWidth);
-    buddyState.y = clamp(newY, 0, window.innerHeight - spriteConfig.frameHeight);
+    if (deltaX > dragThreshold || deltaY > dragThreshold) {
+      hasMoved = true;
+      buddyState.isDragging = true;
+      console.log('Dragging buddy');
+    }
     
-    updateBuddyStyle();
+    if (buddyState.isDragging) {
+      // Calculate new position based on mouse position
+      const newX = moveEvent.clientX - buddyState.dragOffsetX;
+      const newY = moveEvent.clientY - buddyState.dragOffsetY;
+      
+      // Clamp to viewport bounds
+      const spriteConfig = SPRITE_CONFIG[CURRENT_SPRITE];
+      buddyState.x = clamp(newX, 0, window.innerWidth - spriteConfig.frameWidth);
+      buddyState.y = clamp(newY, 0, window.innerHeight - spriteConfig.frameHeight);
+      
+      updateBuddyStyle();
+    }
   }
   
   function onMouseUp() {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
     
-    buddyState.isDragging = false;
-    
-    // Resume exploring if was previously exploring, or stay in rest if was resting
-    if (!buddyState.inCorner) {
-      buddyState.moving = true;
-      buddyState.nextDecisionTime = performance.now(); // Trigger new target immediately
+    if (buddyState.isDragging) {
+      console.log('Finished dragging buddy, new position:', buddyState.x, buddyState.y);
+      
+      // Mark that a drag just occurred so onClick will skip state changes
+      buddyState.wasJustDragged = true;
+      
+      // Restore exploring state if it was moving before drag
+      if (wasPreviouslyMoving) {
+        buddyState.moving = true;
+        buddyState.nextDecisionTime = performance.now(); // Trigger new target immediately
+      }
+      
+      // Save the new position and preserve the current state (inCorner or exploring)
+      saveBuddyState();
     }
     
-    saveBuddyState(); // Save the new position
-    console.log('Finished dragging buddy, new position:', buddyState.x, buddyState.y);
+    buddyState.isDragging = false;
   }
   
   document.addEventListener('mousemove', onMouseMove);
