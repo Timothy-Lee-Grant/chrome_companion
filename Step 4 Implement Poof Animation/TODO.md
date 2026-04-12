@@ -262,3 +262,66 @@ Change the animation, to now implement this png as the poof instead of the previ
 - ✅ Drag buddy while exploring → continues exploring after drop from new location
 - ✅ State persists across page reloads
 - ✅ Minor pointer movements (< 5px) don't trigger drag mode
+
+
+## Phase 17:
+- The character is not working correctly. Make the character operate as follows.
+
+States:
+- RESTING
+- EXPLORING
+- DRAGGING
+
+Initial State:
+- RESTING
+
+Transitions:
+
+RESTING:
+CLICK -> EXPLORING (start exploring from current position)
+DRAG_START -> DRAGGING (remember previous state = RESTING)
+
+EXPLORING:
+CLICK -> RESTING (teleport to top-left, stop movement)
+DRAG_START -> DRAGGING (remember previous state = EXPLORING)
+
+DRAGGING:
+DRAG_END:
+if previous state was RESTING -> RESTING (stay at dropped position)
+if previous state was EXPLORING -> EXPLORING (resume exploring at dropped position)
+
+
+
+
+
+
+
+Current State: RESTING
+
+CLICK:
+→ switch to EXPLORING
+→ start movement from current position
+
+DRAG_START:
+→ switch to DRAGGING
+→ store previous state (RESTING)
+
+DRAG_END:
+→ return to RESTING
+→ remain at dropped position
+
+
+Current State: EXPLORING
+
+CLICK:
+→ switch to RESTING
+→ stop movement
+→ teleport to top-left
+
+DRAG_START:
+→ switch to DRAGGING
+→ store previous state (EXPLORING)
+
+DRAG_END:
+→ return to EXPLORING
+→ resume movement from dropped position
