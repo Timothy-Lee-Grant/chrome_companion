@@ -86,16 +86,7 @@ let poofStyleSheet = null; // For poof keyframes
 
 // Load saved state from localStorage or initialize with defaults
 function loadBuddyState() {
-  const saved = localStorage.getItem('buddyState');
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch (e) {
-      console.warn('Failed to parse saved buddyState:', e);
-    }
-  }
-  // Default state: start in corner (resting state)
-  return {
+  const defaults = {
     x: 0,
     y: 0,
     targetX: null,
@@ -109,6 +100,8 @@ function loadBuddyState() {
     animationState: 'idle',
     facing: 1,
     scale: 1.0,
+    state: 'RESTING',
+    previousState: null,
     inCorner: true, // Start in resting state
     isPoofing: false,
     isDragging: false,
@@ -116,6 +109,37 @@ function loadBuddyState() {
     dragOffsetY: 0,
     wasJustDragged: false, // Flag to prevent click handler from running after drag
   };
+
+  const saved = localStorage.getItem('buddyState');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      const stateFromStorage = parsed.state || (parsed.inCorner ? 'RESTING' : 'EXPLORING');
+      const nextDecisionTime = stateFromStorage === 'EXPLORING'
+        ? performance.now()
+        : performance.now() + 999999;
+      return {
+        ...defaults,
+        ...parsed,
+        state: stateFromStorage,
+        previousState: null,
+        inCorner: stateFromStorage === 'RESTING',
+        moving: false,
+        nextDecisionTime,
+        targetX: null,
+        targetY: null,
+        isPoofing: false,
+        isDragging: false,
+        dragOffsetX: 0,
+        dragOffsetY: 0,
+        wasJustDragged: false,
+      };
+    } catch (e) {
+      console.warn('Failed to parse saved buddyState:', e);
+    }
+  }
+
+  return defaults;
 }
 
 // Start position in the middle of the viewport (or fallback 100x100)
@@ -293,6 +317,7 @@ function startPoofAnimation() {
     buddyState.moving = false;
     buddyState.targetX = null;
     buddyState.targetY = null;
+    buddyState.state = 'RESTING';
     buddyState.inCorner = true;
     buddyState.nextDecisionTime = performance.now() + 999999; // Prevent auto movement
     saveBuddyState(); // Save state to localStorage
@@ -332,7 +357,7 @@ function tick(now) {
     return;
   }
 
-  if (now >= buddyState.nextDecisionTime && !buddyState.moving && !buddyState.inCorner) {
+  if (now >= buddyState.nextDecisionTime && !buddyState.moving && buddyState.state === 'EXPLORING') {
     chooseNextTarget();
   }
 
@@ -368,16 +393,19 @@ function onClick(e) {
   e.stopPropagation();
   console.log('Buddy clicked at', buddyState.x, buddyState.y);
   
-  if (!buddyState.inCorner) {
+  if (buddyState.state === 'EXPLORING') {
     // Start poof animation and teleport to corner
     startPoofAnimation();
     return; // Skip wave animation during poof
-  } else {
-    // Resume exploring from corner
+  } else if (buddyState.state === 'RESTING') {
+    // Resume exploring from current position
+    buddyState.state = 'EXPLORING';
     buddyState.inCorner = false;
     buddyState.nextDecisionTime = performance.now(); // Allow immediate movement
     saveBuddyState(); // Save state to localStorage
     console.log('Buddy resumed exploring');
+  } else {
+    return; // Ignore clicks during drag state
   }
   
   // Play wave animation (only when not poofing)
@@ -413,10 +441,11 @@ function onMouseDown(e) {
   const dragThreshold = 5; // pixels - minimum movement to count as drag
   
   // Pause movement during drag
-  const wasPreviouslyMoving = buddyState.moving;
+  buddyState.previousState = buddyState.state;
   buddyState.moving = false;
+  buddyState.wasJustDragged = false;
   
-  console.log('Mouse down on buddy');
+  console.log('Mouse down on buddy, previous state:', buddyState.previousState);
   
   function onMouseMove(moveEvent) {
     // Check if mouse has moved enough to count as a drag
@@ -425,6 +454,11 @@ function onMouseDown(e) {
     
     if (deltaX > dragThreshold || deltaY > dragThreshold) {
       hasMoved = true;
+      if (buddyState.state !== 'DRAGGING') {
+        buddyState.state = 'DRAGGING';
+        buddyState.inCorner = false;
+        console.log('Drag started, entering DRAGGING state from', buddyState.previousState);
+      }
       buddyState.isDragging = true;
       console.log('Dragging buddy');
     }
@@ -453,13 +487,18 @@ function onMouseDown(e) {
       // Mark that a drag just occurred so onClick will skip state changes
       buddyState.wasJustDragged = true;
       
-      // Restore exploring state if it was moving before drag
-      if (wasPreviouslyMoving) {
-        buddyState.moving = true;
+      // Transition back to the previous state after drag ends
+      if (buddyState.previousState === 'EXPLORING') {
+        buddyState.state = 'EXPLORING';
+        buddyState.inCorner = false;
         buddyState.nextDecisionTime = performance.now(); // Trigger new target immediately
+      } else {
+        buddyState.state = 'RESTING';
+        buddyState.inCorner = true;
+        buddyState.nextDecisionTime = performance.now() + 999999; // Keep resting
       }
       
-      // Save the new position and preserve the current state (inCorner or exploring)
+      // Save the new position and preserve the current state
       saveBuddyState();
     }
     
@@ -476,7 +515,7 @@ function saveBuddyState() {
     x: buddyState.x,
     y: buddyState.y,
     scale: buddyState.scale,
-    inCorner: buddyState.inCorner,
+    state: buddyState.state,
   };
   localStorage.setItem('buddyState', JSON.stringify(stateToSave));
   console.log('Buddy state saved to localStorage:', stateToSave);

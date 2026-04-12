@@ -264,8 +264,8 @@ Change the animation, to now implement this png as the poof instead of the previ
 - ✅ Minor pointer movements (< 5px) don't trigger drag mode
 
 
-## Phase 17:
-- The character is not working correctly. Make the character operate as follows.
+## Phase 17: ✅ COMPLETED
+- The character response to being clicked or dragged is not following as I was hoping. I created a state diagram below to explain exactly how the character should operate:
 
 States:
 - RESTING
